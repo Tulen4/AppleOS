@@ -1,0 +1,23 @@
+# Артефакты сборки — пересобираются скриптами, в репозиторий не идут
+build/
+work/
+mkwork/
+
+# Образы и пакеты
+*.iso
+*.img
+*.sfs
+*.cpio.gz
+*.pkg.tar.*
+*.db
+*.db.tar.gz
+*.files
+*.files.tar.gz
+
+# Мусор редакторов и системы
+.DS_Store
+Thumbs.db
+*~
+*.swp
+.idea/
+.vscode/

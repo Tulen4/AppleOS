@@ -8,8 +8,9 @@ WORK="build/archiso"
 OUT="build/arch-out"
 MKWORK="build/mkwork"
 
-command -v mkarchiso >/dev/null || { echo "ERROR: нет mkarchiso. sudo pacman -S archiso"; exit 1; }
-command -v repo-add >/dev/null || { echo "ERROR: нет repo-add. sudo pacman -S pacman-contrib"; exit 1; }
+command -v mkarchiso >/dev/null || { echo "ERROR: нет mkarchiso. На Arch: sudo pacman -S archiso. На другом дистрибутиве: ./scripts/build-arch-docker.sh"; exit 1; }
+command -v repo-add >/dev/null || { echo "ERROR: нет repo-add. На Arch: sudo pacman -S pacman-contrib. На другом дистрибутиве: ./scripts/build-arch-docker.sh"; exit 1; }
+[ -d /usr/share/archiso/configs/releng ] || { echo "ERROR: нет профиля releng (пакет archiso). На другом дистрибутиве: ./scripts/build-arch-docker.sh"; exit 1; }
 
 echo "[arch] preparing profile in $WORK ..."
 # workdir прошлых запусков принадлежит root (создан под sudo) — чистим через sudo при нужде
@@ -37,6 +38,8 @@ grep -rl "archlinux" "$WORK/syslinux" "$WORK/efiboot" 2>/dev/null | xargs -r sed
 
 # Calamares с нашими конфигами: перепаковка пакета (иначе pacstrap падает
 # с "exists in filesystem": overlay копируется раньше, а --overwrite там нет).
+# PACMAN_CONFIG: резолв calamares через конфиг профиля (там репа EndeavourOS).
+export PACMAN_CONFIG="$(pwd)/$WORK/pacman.conf"
 ./scripts/mk-calamares-pkg.sh "$WORK"
 
 echo "[arch] running mkarchiso (нужен sudo, долгая сборка, ~1-2 ГБ загрузок) ..."

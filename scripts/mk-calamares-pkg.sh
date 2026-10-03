@@ -20,8 +20,11 @@ mkdir -p "$PKGDIR" "$REPODIR"
 
 # 1. Оригинальный пакет calamares (из кэша или скачать). Берем URL ТОЧНО пакета
 # 'calamares': pacman -Sp выводит еще и зависимости, tail -1 там ненадежен.
-CALA_URL="$(pacman -Sp --print-format '%n %l' calamares 2>/dev/null | awk '$1=="calamares" {print $2; exit}')"
-[ -n "$CALA_URL" ] || { echo "ERROR: pacman не знает calamares"; exit 1; }
+# PACMAN_CONFIG (из build-arch-iso.sh) указывает на конфиг профиля с репой EndeavourOS.
+SP_ARGS=()
+[ -n "${PACMAN_CONFIG:-}" ] && SP_ARGS=(--config "$PACMAN_CONFIG")
+CALA_URL="$(pacman -Sp "${SP_ARGS[@]}" --print-format '%n %l' calamares 2>/dev/null | awk '$1=="calamares" {print $2; exit}')"
+[ -n "$CALA_URL" ] || { echo "ERROR: pacman не знает calamares (нужен репозиторий EndeavourOS или сборка через docker: ./scripts/build-arch-docker.sh)"; exit 1; }
 if [[ "$CALA_URL" == file://* ]]; then
   CALA_PKG="${CALA_URL#file://}"
   tar -tf "$CALA_PKG" >/dev/null 2>&1 || { echo "ERROR: битый пакет в кэше: $CALA_PKG"; exit 1; }

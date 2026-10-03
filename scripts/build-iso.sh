@@ -1,25 +1,57 @@
 #!/bin/bash
-# Собирает bootable ISO: ядро хоста + наш initramfs + grub
+# Собирает bootable ISO: СКАЧАННОЕ ядро Arch + наш initramfs + grub.
+# Никаких файлов хоста: на любом ПК получится одинаковый ISO.
+# Переопределить ядро: KERNEL=/path/to/vmlinuz ./build.sh iso
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-source VERSION 2>/dev/null || { DISTRO_NAME="AppleOS"; VERSION="0.1.0"; }
+source VERSION 2>/dev/null || { DISTRO_NAME="AppleOS"; VERSION="0.3.0"; }
 OUT="build/appleos-${VERSION}.iso"
 ISODIR="build/iso"
 INITRAMFS="build/initramfs.cpio.gz"
+KFETCH="build/kernel/vmlinuz-linux"
 
-# 1. Ядро: KERNEL=... извне, иначе /boot/vmlinuz-linux, иначе ищем любое vmlinuz*
+# 1. Ядро: KERNEL=... извне, иначе качаем пакет linux с официального CDN Arch
+# и вытаскиваем из него vmlinuz (кэшируется в build/kernel/).
 KERNEL="${KERNEL:-}"
 if [ -z "$KERNEL" ]; then
-  for k in /boot/vmlinuz-linux "/boot/vmlinuz-$(uname -r)" /boot/vmlinuz*; do
-    [ -f "$k" ] && { KERNEL="$k"; break; }
-  done
+  if [ ! -f "$KFETCH" ]; then
+    # Кэш пакета: битый недокачанный файл качаем заново
+    if ! { [ -f build/kernel/pkg.tar.zst ] && bsdtar -tf build/kernel/pkg.tar.zst 2>/dev/null | grep -qE "vmlinuz$"; }; then
+      rm -f build/kernel/pkg.tar.zst
+      echo "[iso] resolving Arch kernel version..."
+      KFILE="$(curl -fsSL --retry 3 --retry-all-errors --max-time 30 \
+        "https://archlinux.org/packages/core/x86_64/linux/json/" | grep -o '"filename": "[^"]*"' | cut -d'"' -f4)"
+      [ -n "$KFILE" ] || { echo "ERROR: не смог узнать версию ядра (сеть?)"; exit 1; }
+      echo "[iso] downloading $KFILE (~170 МБ, один раз, дальше кэш)..."
+      mkdir -p build/kernel
+      curl -fSL --retry 3 --retry-all-errors -o "build/kernel/pkg.tar.zst" \
+        "https://geo.mirror.pkgbuild.com/core/os/x86_64/$KFILE"
+    else
+      echo "[iso] cached kernel package OK"
+    fi
+    echo "[iso] extracting vmlinuz..."
+    # Раскладка пакета менялась: раньше boot/vmlinuz-linux,
+    # теперь usr/lib/modules/<ver>/vmlinuz — ищем динамически.
+    VMLINUZ_PATH="$(bsdtar -tf "build/kernel/pkg.tar.zst" 2>/dev/null | grep -E "vmlinuz$" | head -1)"
+    [ -n "$VMLINUZ_PATH" ] || { echo "ERROR: vmlinuz не найден в пакете ядра"; exit 1; }
+    if command -v bsdtar >/dev/null 2>&1; then
+      bsdtar -xf "build/kernel/pkg.tar.zst" -C build/kernel "$VMLINUZ_PATH"
+    else
+      tar -I zstd -xf "build/kernel/pkg.tar.zst" -C build/kernel "$VMLINUZ_PATH"
+    fi
+    mv "build/kernel/$VMLINUZ_PATH" "$KFETCH"
+    rm -rf build/kernel/boot build/kernel/usr
+  else
+    echo "[iso] cached kernel: $KFETCH"
+  fi
+  KERNEL="$KFETCH"
 fi
-[ -n "$KERNEL" ] && [ -f "$KERNEL" ] || { echo "ERROR: ядро не найдено. Укажи KERNEL=/path/to/vmlinuz ./build.sh iso"; exit 1; }
+[ -f "$KERNEL" ] || { echo "ERROR: ядро не найдено: $KERNEL"; exit 1; }
 
 [ -f "$INITRAMFS" ] || { echo "ERROR: $INITRAMFS нет. Сначала ./build.sh initramfs"; exit 1; }
 
-command -v grub-mkrescue >/dev/null || { echo "ERROR: нет grub-mkrescue. sudo pacman -S grub xorriso"; exit 1; }
+command -v grub-mkrescue >/dev/null || { echo "ERROR: нет grub-mkrescue. Запусти ./scripts/check-deps.sh"; exit 1; }
 
 echo "[iso] kernel: $KERNEL"
 echo "[iso] initramfs: $INITRAMFS"

@@ -13,12 +13,12 @@ if ! command -v qemu-system-x86_64 >/dev/null; then
   exit 1
 fi
 
-# Ядро для прямого запуска (-kernel): то же что использовалось для ISO
-KERNEL="${KERNEL:-}"
-if [ -z "$KERNEL" ]; then
-  for k in /boot/vmlinuz-linux "/boot/vmlinuz-$(uname -r)" /boot/vmlinuz*; do
-    [ -f "$k" ] && { KERNEL="$k"; break; }
-  done
+# Ядро для прямого запуска (-kernel): скачанное при сборке (build/kernel/),
+# НЕ ядро хоста — чтобы тест был одинаковым на любом ПК.
+KERNEL="${KERNEL:-build/kernel/vmlinuz-linux}"
+if [ ! -f "$KERNEL" ]; then
+  echo "Сначала ./build.sh all (ядро скачается автоматически)"
+  exit 1
 fi
 
 case "$MODE" in

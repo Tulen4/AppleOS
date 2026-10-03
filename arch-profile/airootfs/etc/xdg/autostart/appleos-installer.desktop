@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Установить AppleOS
+Comment=GUI-установщик AppleOS (Calamares)
+Exec=sudo -E calamares
+Icon=/usr/share/pixmaps/appleos-logo.png
+Terminal=false
+Categories=System;Settings;
+X-GNOME-Autostart-enabled=true

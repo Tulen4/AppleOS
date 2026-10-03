@@ -1,0 +1,28 @@
+---
+componentName: appleos
+productName: AppleOS
+version: 0.3.0
+shortVersion: 0.3.0
+versionedName: AppleOS 0.3.0 (based on Arch Linux)
+productUrl: https://example.invalid/appleos
+supportUrl: https://wiki.archlinux.org/
+knownIssuesUrl: https://example.invalid/appleos/bugs
+releaseNotesUrl: https://example.invalid/appleos/notes
+strings:
+  productName: AppleOS
+  shortProductName: AppleOS
+  version: 0.3.0
+  shortVersion: 0.3.0
+  versionedName: AppleOS 0.3.0
+  bootloaderEntryName: AppleOS
+  productUrl: AppleOS
+images:
+  productLogo: logo.png
+  productIcon: logo.png
+  productWelcome: logo.png
+style:
+  sidebarBackground: "#141414"
+  sidebarText: "#FFFFFF"
+  sidebarTextSelect: "#000000"
+  sidebarTextHighlight: "#FFFFFF"
+welcomeStyleCalamares: true

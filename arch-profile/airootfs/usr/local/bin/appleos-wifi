@@ -1,0 +1,18 @@
+#!/bin/bash
+# AppleOS Wi-Fi — подключение без кабеля, сразу из live-сессии.
+# Использование: appleos-wifi  (покажет сети, спросит пароль)
+set -u
+nmcli radio wifi on
+echo "[wifi] сканирую..."
+nmcli dev wifi rescan >/dev/null 2>&1 || true
+sleep 3
+nmcli -f IN-USE,SSID,SIGNAL,SECURITY dev wifi list --rescan no | head -20
+echo ""
+read -rp "SSID: " SSID
+[ -z "${SSID:-}" ] && { echo "пусто, выход."; exit 1; }
+read -rsp "Пароль (пусто — открытая сеть): " PASS; echo ""
+if [ -z "${PASS:-}" ]; then
+  nmcli dev wifi connect "$SSID"
+else
+  nmcli dev wifi connect "$SSID" password "$PASS"
+fi

@@ -1,0 +1,25 @@
+#!/bin/bash
+# AppleOS live-setup: готовит live-сессию до старта SDDM.
+# Запускается юнитом appleos-live.service (oneshot, Before=sddm).
+set -u
+
+# 1. Дом liveuser из skel (sysusers создал пользователя, tmpfiles — каталог)
+if [ ! -f /home/liveuser/.bashrc ] && [ -d /etc/skel ]; then
+  cp -a /etc/skel/. /home/liveuser/
+fi
+chown -R 1000:1000 /home/liveuser 2>/dev/null || true
+
+# 2. Сессия для автовхода: первая доступная (COSMIC — дефолт AppleOS)
+SESSION=""
+for d in /usr/share/wayland-sessions /usr/share/xsessions; do
+  for cand in cosmic.desktop plasma.desktop gnome.desktop xfce.desktop hyprland.desktop sway.desktop i3.desktop; do
+    if [ -f "$d/$cand" ]; then SESSION="$cand"; break 2; fi
+  done
+done
+if [ -n "$SESSION" ]; then
+  mkdir -p /etc/sddm.conf.d
+  sed -i "s/^Session=.*/Session=$SESSION/" /etc/sddm.conf.d/appleos-autologin.conf 2>/dev/null || true
+fi
+
+# 3. Сеть: NetworkManager уже enabled, просто будим Wi-Fi
+nmcli radio wifi on 2>/dev/null || true

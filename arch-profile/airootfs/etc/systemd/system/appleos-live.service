@@ -1,0 +1,13 @@
+[Unit]
+Description=AppleOS live session setup
+Before=sddm.service
+After=systemd-tmpfiles-setup.service systemd-sysusers.service
+Wants=systemd-tmpfiles-setup.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/appleos-live
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

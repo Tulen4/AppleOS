@@ -1,0 +1,4 @@
+DISTRO_NAME="AppleOS"
+VERSION="0.3.0"
+ARCH="x86_64"
+BASE="arch"

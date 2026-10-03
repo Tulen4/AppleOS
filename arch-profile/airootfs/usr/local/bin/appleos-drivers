@@ -1,0 +1,51 @@
+#!/bin/bash
+# AppleOS auto-drivers — как авто-установщик драйверов в EndeavourOS.
+# Детектит GPU/VM/Wi-Fi чип и доставляет пакеты. Офлайн — молча пропускает.
+# Запускается В ЦЕЛИ (chroot) шагом contextualprocess через appleos-finish.
+set -u
+LOG=/root/appleos-drivers.log
+exec >>"$LOG" 2>&1
+echo "=== appleos-drivers: $(date -u) ==="
+
+if ! timeout 15 pacman -Sy >/dev/null 2>&1; then
+  echo "SKIP: нет сети, драйверы не ставим (поставь позже: sudo pacman -S ...)."
+  exit 0
+fi
+
+PCI="$(lspci -nn 2>/dev/null || true)"
+install() { echo "INSTALL: $*"; timeout 600 pacman -S --noconfirm --needed "$@" || echo "WARN: не поставилось: $*"; }
+
+# --- NVIDIA (современный стек: открытые модули; для старых карт останется nouveau) ---
+if echo "$PCI" | grep -qiE "10de|nvidia"; then
+  install nvidia-open-dkms nvidia-utils nvidia-settings
+  mkdir -p /etc/modprobe.d
+  echo "options nvidia-drm modeset=1 fbdev=1" > /etc/modprobe.d/appleos-nvidia.conf
+fi
+# --- AMD ---
+if echo "$PCI" | grep -qiE "1002|amd.*vga|ati"; then
+  install xf86-video-amdgpu vulkan-radeon
+fi
+# --- Intel ---
+if echo "$PCI" | grep -qiE "8086|intel.*(vga|graphics|uhd|iris|arc)"; then
+  install vulkan-intel intel-media-driver
+fi
+# --- Broadcom Wi-Fi (проприетарный, как в EndeavourOS) ---
+if echo "$PCI" | grep -qi "14e4"; then
+  install broadcom-wl-dkms linux-headers
+fi
+# --- Виртуалки ---
+DMIDECODE="$(dmidecode -s system-product-name 2>/dev/null || true)"
+if echo "$DMIDECODE $PCI" | grep -qi "virtualbox"; then
+  install virtualbox-guest-utils
+  systemctl enable vboxservice 2>/dev/null || true
+fi
+if echo "$DMIDECODE $PCI" | grep -qiE "vmware|15ad"; then
+  install open-vm-tools
+  systemctl enable vmtoolsd 2>/dev/null || true
+fi
+if echo "$DMIDECODE" | grep -qi "qemu"; then
+  install spice-vdagent qemu-guest-agent
+  systemctl enable qemu-guest-agent 2>/dev/null || true
+fi
+
+echo "=== appleos-drivers done ==="

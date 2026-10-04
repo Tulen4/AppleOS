@@ -1,5 +1,5 @@
 #!/bin/bash
-# Запуск AppleOS в QEMU. Режимы: ./run-qemu.sh [kernel|iso]  (default: kernel — быстрее)
+# Run AppleOS in QEMU. Modes: ./run-qemu.sh [kernel|iso]  (default: kernel — faster)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -8,22 +8,24 @@ MEM="${MEM:-512M}"
 SMP="${SMP:-2}"
 
 if ! command -v qemu-system-x86_64 >/dev/null; then
-  echo "ERROR: qemu-system-x86_64 не найден."
-  echo "Установи: sudo pacman -S qemu-system-x86"
+  echo "ERROR: qemu-system-x86_64 not found."
+  echo "  Arch:   sudo pacman -S qemu-system-x86"
+  echo "  Ubuntu: sudo apt install qemu-system-x86"
+  echo "  Fedora: sudo dnf install qemu-system-x86"
   exit 1
 fi
 
-# Ядро для прямого запуска (-kernel): скачанное при сборке (build/kernel/),
-# НЕ ядро хоста — чтобы тест был одинаковым на любом ПК.
+# Kernel for direct boot (-kernel): downloaded at build time (build/kernel/),
+# NOT the host kernel — so the test is identical on any PC.
 KERNEL="${KERNEL:-build/kernel/vmlinuz-linux}"
 if [ ! -f "$KERNEL" ]; then
-  echo "Сначала ./build.sh all (ядро скачается автоматически)"
+  echo "Run ./build.sh all first (the kernel downloads automatically)"
   exit 1
 fi
 
 case "$MODE" in
   kernel)
-    [ -f build/initramfs.cpio.gz ] || { echo "Сначала ./build.sh all"; exit 1; }
+    [ -f build/initramfs.cpio.gz ] || { echo "Run ./build.sh all first"; exit 1; }
     echo "[qemu] direct kernel boot: $KERNEL"
     exec qemu-system-x86_64 \
       -kernel "$KERNEL" \
@@ -34,7 +36,7 @@ case "$MODE" in
     ;;
   iso)
     ISO="$(ls -t build/appleos-*.iso 2>/dev/null | head -1)"
-    [ -n "${ISO:-}" ] || { echo "Сначала ./build.sh all"; exit 1; }
+    [ -n "${ISO:-}" ] || { echo "Run ./build.sh all first"; exit 1; }
     echo "[qemu] iso boot: $ISO"
     exec qemu-system-x86_64 \
       -cdrom "$ISO" -boot d \

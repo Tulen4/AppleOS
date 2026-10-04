@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2034
-# AppleOS — Arch-based. Профиль archiso на основе releng.
+# AppleOS — Arch-based. archiso profile based on releng.
 
 iso_name="appleos"
 iso_label="APPLEOS_$(date --date="@${SOURCE_DATE_EPOCH:-$(date +%s)}" +%Y%m)"
@@ -28,4 +28,5 @@ file_permissions=(
   ["/usr/local/bin/appleos-finish"]="0:0:755"
   ["/usr/local/bin/appleos-live"]="0:0:755"
   ["/usr/local/bin/appleos-wifi"]="0:0:755"
+  ["/usr/local/bin/appleos-installer-chooser"]="0:0:755"
 )

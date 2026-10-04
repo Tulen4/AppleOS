@@ -1,0 +1,109 @@
+#!/bin/bash
+# AppleOS installer chooser — shown at live session start:
+# online install (from network, with DE/WM/shell choice), offline install
+# (no internet — for VMs), or Wi-Fi setup. English/Russian.
+set -u
+
+ICON="/usr/share/pixmaps/appleos-logo.png"
+CALA_ONLINE="/etc/calamares/settings_online.conf"
+CALA_OFFLINE="/etc/calamares/settings_offline.conf"
+
+has_net() {
+  curl -sI --max-time 6 https://archlinux.org >/dev/null 2>&1 && return 0
+  ping -c1 -W3 1.1.1.1 >/dev/null 2>&1
+}
+
+# ---- language: English / Русский ----
+if [ "${APPLEOS_LANG:-}" != "ru" ] && [ "${APPLEOS_LANG:-}" != "en" ]; then
+  if command -v zenity >/dev/null 2>&1; then
+    L="$(zenity --list --radiolist --window-icon="$ICON" --print-column=2 \
+      --title="AppleOS" --text="Choose language / Выбери язык:" \
+      --column="" --column="Language" \
+      TRUE "English" FALSE "Русский" 2>/dev/null)" || exit 0
+    [ "$L" = "Русский" ] && APPLEOS_LANG=ru || APPLEOS_LANG=en
+  else
+    APPLEOS_LANG=en
+  fi
+fi
+
+if [ "$APPLEOS_LANG" = ru ]; then
+  T_TITLE="Установка AppleOS"; T_ONLINE="Онлайн"; T_OFFLINE="Офлайн"; T_WIFI="Настроить Wi-Fi"
+  T_NET_OK="Интернет: <b>ЕСТЬ</b> — рекомендую онлайн-установку."
+  T_NET_NO="Интернет: <b>НЕТ</b> — выбирай офлайн или сначала настрой Wi-Fi."
+  T_ABOUT="Онлайн — выбранный DE/WM, шелл и драйверы докачаются из сети.\nОфлайн — готовая live-система (COSMIC), интернет не нужен."
+  T_MODE="Режим"; T_WHAT="Что будет"
+  T_D_ON="DE/WM и шелл на выбор, пакеты из сети"; T_D_OFF="Как в live (COSMIC), работает без сети"; T_D_WIFI="Подключиться к беспроводной сети"
+  T_W_TITLE="AppleOS — Wi-Fi"; T_W_PICK="Выбери сеть:"; T_W_NET="Сеть"
+  T_W_NONE="Сети не найдены. Проверь адаптер: nmcli dev"
+  T_W_PASS="Пароль для «%s» (пусто — открытая сеть):"
+  T_W_OK="Подключено к «%s»"; T_W_IP=" (IP: %s)"; T_W_FAIL="Не подключилось:\n%s"
+else
+  T_TITLE="Install AppleOS"; T_ONLINE="Online"; T_OFFLINE="Offline"; T_WIFI="Set up Wi-Fi"
+  T_NET_OK="Internet: <b>AVAILABLE</b> — online install recommended."
+  T_NET_NO="Internet: <b>NOT FOUND</b> — go offline or set up Wi-Fi first."
+  T_ABOUT="Online — chosen DE/WM, shell and drivers are downloaded.\nOffline — ready live system (COSMIC), no internet needed."
+  T_MODE="Mode"; T_WHAT="What happens"
+  T_D_ON="DE/WM and shell of your choice, packages from network"; T_D_OFF="As in live (COSMIC), works offline"; T_D_WIFI="Connect to a wireless network"
+  T_W_TITLE="AppleOS — Wi-Fi"; T_W_PICK="Pick a network:"; T_W_NET="Network"
+  T_W_NONE="No networks found. Check the adapter: nmcli dev"
+  T_W_PASS="Password for “%s” (empty — open network):"
+  T_W_OK="Connected to “%s”"; T_W_IP=" (IP: %s)"; T_W_FAIL="Connection failed:\n%s"
+fi
+
+wifi_setup() {
+  nmcli radio wifi on 2>/dev/null
+  nmcli dev wifi rescan >/dev/null 2>&1
+  sleep 2
+  NETS="$(nmcli -t -f SSID,SIGNAL dev wifi list --rescan no 2>/dev/null | grep -v '^--' | awk -F: '!seen[$1]++ && $1!=""' | head -30)"
+  # shellcheck disable=SC2059
+  [ -n "$NETS" ] || { zenity --error --window-icon="$ICON" --text="$T_W_NONE" 2>/dev/null; return 1; }
+  CHOICE="$(echo "$NETS" | awk -F: '{print $1" ("$2"%)"}' | zenity --list --window-icon="$ICON" \
+    --title="$T_W_TITLE" --text="$T_W_PICK" --column="$T_W_NET" 2>/dev/null)" || return 1
+  SSID="${CHOICE% (*}"
+  [ -n "$SSID" ] || return 1
+  # shellcheck disable=SC2059
+  PROMPT="$(printf "$T_W_PASS" "$SSID")"
+  PASS="$(zenity --entry --hide-text --window-icon="$ICON" --title="$T_W_TITLE" \
+    --text="$PROMPT" 2>/dev/null)" || return 1
+  if [ -z "$PASS" ]; then
+    OUT="$(nmcli dev wifi connect "$SSID" 2>&1)"
+  else
+    OUT="$(nmcli dev wifi connect "$SSID" password "$PASS" 2>&1)"
+  fi
+  if [ $? -eq 0 ]; then
+    IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
+    # shellcheck disable=SC2059
+    MSG="$(printf "$T_W_OK" "$SSID")"; [ -n "$IP" ] && MSG="$MSG$(printf "$T_W_IP" "$IP")"
+    zenity --info --window-icon="$ICON" --text="$MSG" 2>/dev/null
+  else
+    # shellcheck disable=SC2059
+    zenity --error --window-icon="$ICON" --text="$(printf "$T_W_FAIL" "$OUT")" 2>/dev/null
+    return 1
+  fi
+}
+
+# No zenity fallback — plain text choice
+if ! command -v zenity >/dev/null 2>&1; then
+  echo "AppleOS installer: 1=online 2=offline"
+  read -rp "Choice [1/2]: " M
+  case "$M" in
+    1) exec sudo -E calamares -c "$CALA_ONLINE" ;;
+    *) exec sudo -E calamares -c "$CALA_OFFLINE" ;;
+  esac
+fi
+
+while true; do
+  if has_net; then HINT="$T_NET_OK"; DEF_ON="TRUE"; DEF_OFF="FALSE"
+  else HINT="$T_NET_NO"; DEF_ON="FALSE"; DEF_OFF="TRUE"; fi
+  MODE="$(zenity --list --radiolist --window-icon="$ICON" --print-column=2 \
+    --title="$T_TITLE" --text="$HINT\n\n$T_ABOUT" \
+    --column="" --column="$T_MODE" --column="$T_WHAT" \
+    "$DEF_ON" "$T_ONLINE" "$T_D_ON" \
+    "$DEF_OFF" "$T_OFFLINE" "$T_D_OFF" \
+    "FALSE" "$T_WIFI" "$T_D_WIFI" 2>/dev/null)" || exit 0
+  case "$MODE" in
+    "$T_ONLINE") sudo -E calamares -c "$CALA_ONLINE"; exit $? ;;
+    "$T_OFFLINE") sudo -E calamares -c "$CALA_OFFLINE"; exit $? ;;
+    *) wifi_setup ;;
+  esac
+done

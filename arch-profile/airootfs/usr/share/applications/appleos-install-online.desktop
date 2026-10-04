@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Install AppleOS (online)
+Name[ru]=Установить AppleOS (онлайн)
+Comment=Network install: DE/WM choice, shell, drivers
+Comment[ru]=Установка из сети: выбор DE/WM, шелл, драйверы
+Exec=sudo -E calamares -c /etc/calamares/settings_online.conf
+Icon=/usr/share/pixmaps/appleos-logo.png
+Terminal=false
+Categories=System;Settings;

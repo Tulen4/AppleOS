@@ -1,29 +1,30 @@
 #!/bin/bash
-# AppleOS finish — последний шаг установки в chroot цели.
-# Чистит live-артефакты, включает сервисы, ставит шелл, чинит репозиторий, зовет драйверы.
+# AppleOS finish — the last install step, in the target chroot.
+# Cleans live artifacts, enables services, sets the shell, fixes the repo, calls drivers.
 set -u
 LOG=/root/appleos-install.log
 exec >>"$LOG" 2>&1
 echo "=== appleos-finish: $(date -u) ==="
 
-# 1. Убрать live-артефакты (автостарт установщика, автовход live, маски сети live)
+# 1. Remove live artifacts (installer autostart + shortcuts, live autologin, live net masks)
 rm -f /etc/xdg/autostart/appleos-installer.desktop
+rm -f /usr/share/applications/appleos-install-online.desktop /usr/share/applications/appleos-install-offline.desktop
 rm -f /etc/sddm.conf.d/appleos-autologin.conf
 rm -f /etc/systemd/system/systemd-networkd.service /etc/systemd/system/iwd.service
 rm -f /etc/sudoers.d/10-liveuser
-rm -f /usr/local/bin/appleos-live /usr/local/bin/appleos-wifi
+rm -f /usr/local/bin/appleos-live /usr/local/bin/appleos-wifi /usr/local/bin/appleos-installer-chooser
 rm -f /usr/lib/sysusers.d/appleos-live.conf /usr/lib/tmpfiles.d/appleos-live.conf
 rm -f /etc/systemd/system/appleos-live.service \
       /etc/systemd/system/multi-user.target.wants/appleos-live.service
 
-# 2. Сервисы цели: сеть через NetworkManager, графический вход
+# 2. Target services: NetworkManager networking, graphical login
 systemctl enable NetworkManager sddm 2>/dev/null || true
 systemctl set-default graphical.target 2>/dev/null || true
 
-# 3. Реальные пользователи (uid>=1000, кроме liveuser)
+# 3. Real users (uid>=1000, except liveuser)
 USERS="$(awk -F: '$3>=1000 && $1!="nobody" && $1!="liveuser" {print $1}' /etc/passwd)"
 
-# 4. Шелл пользователя: zsh > fish > bash — по факту выбранному на шаге netinstall
+# 4. User shell: zsh > fish > bash — matching the netinstall choice
 NEWSHELL=/bin/bash
 command -v zsh  >/dev/null && NEWSHELL=/bin/zsh
 command -v fish >/dev/null && [ "$NEWSHELL" = /bin/bash ] && NEWSHELL=/bin/fish
@@ -31,27 +32,27 @@ for u in $USERS; do
   [ -x "$NEWSHELL" ] && chsh -s "$NEWSHELL" "$u" && echo "shell($u)=$NEWSHELL"
 done
 
-# 5. Удалить liveuser, если создан реальный пользователь
+# 5. Drop liveuser if a real user was created
 if [ -n "$USERS" ] && id liveuser >/dev/null 2>&1; then
   userdel -r liveuser 2>/dev/null || userdel liveuser 2>/dev/null || true
   echo "liveuser removed"
 fi
 
-# 6. Драйверы (как в EndeavourOS)
+# 6. Drivers (EndeavourOS-style)
 if [ -x /usr/local/bin/appleos-drivers ]; then
-  /usr/local/bin/appleos-drivers || echo "WARN: appleos-drivers failed, см. /root/appleos-drivers.log"
+  /usr/local/bin/appleos-drivers || echo "WARN: appleos-drivers failed, see /root/appleos-drivers.log"
 fi
 
-# 7. Репозиторий EndeavourOS в цели — включаем проверку подписей обратно.
-# На сборке ISO был SigLevel Never (иначе pacstrap не видит ключ),
-# ключ endeavouros-keyring уже стоит пакетом — можно доверять.
+# 7. EndeavourOS repo on the target — re-enable signature checks.
+# Build-time ISO used SigLevel Never (otherwise pacstrap can't see the key),
+# the endeavouros-keyring key is already installed as a package — trust it.
 if grep -q "^\[endeavouros\]" /etc/pacman.conf 2>/dev/null && pacman -Q endeavouros-keyring >/dev/null 2>&1; then
   awk 'BEGIN{repo=0} /^\[endeavouros\]/{repo=1} /^\[/&&!/^\[endeavouros\]/{repo=0} repo&&/^SigLevel/{print "SigLevel = PackageRequired"; next} {print}' \
     /etc/pacman.conf > /etc/pacman.conf.new && mv /etc/pacman.conf.new /etc/pacman.conf
   echo "endeavouros repo hardened (PackageRequired)"
 fi
 
-# 8. Убрать локальный сборочный репозиторий (file:// путь сборки в цели мертв).
+# 8. Drop the local build repo (its file:// build path is dead on the target).
 if grep -q "^\[appleos-local\]" /etc/pacman.conf 2>/dev/null; then
   awk 'BEGIN{skip=0} /^\[appleos-local\]/{skip=1; next} /^\[/{skip=0} !skip' \
     /etc/pacman.conf > /etc/pacman.conf.new && mv /etc/pacman.conf.new /etc/pacman.conf

@@ -143,3 +143,4 @@ fish
 pciutils
 mesa
 vulkan-icd-loader
+zenity

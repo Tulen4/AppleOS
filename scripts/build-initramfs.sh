@@ -1,13 +1,13 @@
 #!/bin/bash
-# Пакует build/rootfs -> build/initramfs.cpio.gz (newc, с /init в корне)
+# Packs build/rootfs -> build/initramfs.cpio.gz (newc, with /init at root)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 ROOTFS="build/rootfs"
 OUT="build/initramfs.cpio.gz"
 
-[ -d "$ROOTFS" ] || { echo "ERROR: $ROOTFS нет. Сначала ./build.sh rootfs"; exit 1; }
-[ -x "$ROOTFS/init" ] || { echo "ERROR: $ROOTFS/init не исполняемый"; exit 1; }
+[ -d "$ROOTFS" ] || { echo "ERROR: no $ROOTFS. Run ./build.sh rootfs first"; exit 1; }
+[ -x "$ROOTFS/init" ] || { echo "ERROR: $ROOTFS/init is not executable"; exit 1; }
 
 echo "[initramfs] packing $ROOTFS -> $OUT ..."
 (

@@ -1,4 +1,4 @@
-# configs/ — задел под v0.2
-- `kernel.config` — сюда положим свой конфиг ванильного ядра (make defconfig + наши опции).
-- `busybox.config` — сюда положим конфиг для сборки BusyBox из исходников (пока качаем готовый static).
-Пока пусто: v0.1 использует ядро хоста и готовый busybox 1.35.0.
+# configs/ — reserved for v0.4+
+- `kernel.config` — future custom vanilla kernel config (`make defconfig` + our options).
+- `busybox.config` — future BusyBox-from-source build config (v0.3 downloads a static binary).
+Currently empty: v0.3 uses the downloaded Arch kernel + static BusyBox 1.35.0.

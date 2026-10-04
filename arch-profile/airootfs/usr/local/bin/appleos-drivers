@@ -1,21 +1,21 @@
 #!/bin/bash
-# AppleOS auto-drivers — как авто-установщик драйверов в EndeavourOS.
-# Детектит GPU/VM/Wi-Fi чип и доставляет пакеты. Офлайн — молча пропускает.
-# Запускается В ЦЕЛИ (chroot) шагом contextualprocess через appleos-finish.
+# AppleOS auto-drivers — like the EndeavourOS driver auto-installer.
+# Detects GPU/VM/Wi-Fi chips and installs packages. Offline — silently skips.
+# Runs IN THE TARGET (chroot) via the contextualprocess step through appleos-finish.
 set -u
 LOG=/root/appleos-drivers.log
 exec >>"$LOG" 2>&1
 echo "=== appleos-drivers: $(date -u) ==="
 
 if ! timeout 15 pacman -Sy >/dev/null 2>&1; then
-  echo "SKIP: нет сети, драйверы не ставим (поставь позже: sudo pacman -S ...)."
+  echo "SKIP: no network, skipping drivers (install later: sudo pacman -S ...)."
   exit 0
 fi
 
 PCI="$(lspci -nn 2>/dev/null || true)"
-install() { echo "INSTALL: $*"; timeout 600 pacman -S --noconfirm --needed "$@" || echo "WARN: не поставилось: $*"; }
+install() { echo "INSTALL: $*"; timeout 600 pacman -S --noconfirm --needed "$@" || echo "WARN: failed to install: $*"; }
 
-# --- NVIDIA (современный стек: открытые модули; для старых карт останется nouveau) ---
+# --- NVIDIA (modern stack: open modules; old cards keep nouveau) ---
 if echo "$PCI" | grep -qiE "10de|nvidia"; then
   install nvidia-open-dkms nvidia-utils nvidia-settings
   mkdir -p /etc/modprobe.d
@@ -29,11 +29,11 @@ fi
 if echo "$PCI" | grep -qiE "8086|intel.*(vga|graphics|uhd|iris|arc)"; then
   install vulkan-intel intel-media-driver
 fi
-# --- Broadcom Wi-Fi (проприетарный, как в EndeavourOS) ---
+# --- Broadcom Wi-Fi (proprietary, like EndeavourOS) ---
 if echo "$PCI" | grep -qi "14e4"; then
   install broadcom-wl-dkms linux-headers
 fi
-# --- Виртуалки ---
+# --- VMs ---
 DMIDECODE="$(dmidecode -s system-product-name 2>/dev/null || true)"
 if echo "$DMIDECODE $PCI" | grep -qi "virtualbox"; then
   install virtualbox-guest-utils

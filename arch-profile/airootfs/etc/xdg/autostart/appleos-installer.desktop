@@ -1,8 +1,10 @@
 [Desktop Entry]
 Type=Application
-Name=Установить AppleOS
-Comment=GUI-установщик AppleOS (Calamares)
-Exec=sudo -E calamares
+Name=Install AppleOS
+Name[ru]=Установить AppleOS
+Comment=Online install, offline install, or Wi-Fi setup
+Comment[ru]=Выбор: онлайн-установка, офлайн-установка или Wi-Fi
+Exec=/usr/local/bin/appleos-installer-chooser
 Icon=/usr/share/pixmaps/appleos-logo.png
 Terminal=false
 Categories=System;Settings;

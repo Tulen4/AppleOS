@@ -1,6 +1,6 @@
 #!/bin/sh
-# AppleOS /init — PID 1. Минимальный init на shell.
-# Ядро монтирует initramfs как root и запускает этот файл.
+# AppleOS /init — PID 1. Minimal shell init.
+# The kernel mounts initramfs as root and runs this file.
 
 export PATH=/bin:/sbin:/usr/bin:/usr/sbin
 export HOME=/root
@@ -20,11 +20,11 @@ echo ""
 echo "  uname : $(uname -srm 2>/dev/null)"
 echo "  shells: $(ls /bin/sh 2>/dev/null)"
 echo ""
-echo "Добро пожаловать в AppleOS! Выйти: exec reboot / выключить: exec poweroff"
+echo "Welcome to AppleOS! Reboot: exec reboot / power off: exec poweroff"
 echo ""
 
-# Доустановка всех апплетов busybox (на случай если линки не все попали в образ)
+# Install all busybox applets (in case some links missed the image)
 busybox --install -s /bin 2>/dev/null
 
-# Интерактивная оболочка как PID 1. Ctrl-C не убьет init, это нормально.
+# Interactive shell as PID 1. Ctrl-C won't kill init, that's fine.
 exec /bin/sh -l

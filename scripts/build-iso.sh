@@ -1,7 +1,7 @@
 #!/bin/bash
-# Собирает bootable ISO: СКАЧАННОЕ ядро Arch + наш initramfs + grub.
-# Никаких файлов хоста: на любом ПК получится одинаковый ISO.
-# Переопределить ядро: KERNEL=/path/to/vmlinuz ./build.sh iso
+# Builds a bootable ISO: DOWNLOADED Arch kernel + our initramfs + grub.
+# No host files: identical ISO on any PC.
+# Override the kernel: KERNEL=/path/to/vmlinuz ./build.sh iso
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -11,19 +11,19 @@ ISODIR="build/iso"
 INITRAMFS="build/initramfs.cpio.gz"
 KFETCH="build/kernel/vmlinuz-linux"
 
-# 1. Ядро: KERNEL=... извне, иначе качаем пакет linux с официального CDN Arch
-# и вытаскиваем из него vmlinuz (кэшируется в build/kernel/).
+# 1. Kernel: KERNEL=... from env, else download the linux package from the official Arch CDN
+# and extract vmlinuz from it (cached in build/kernel/).
 KERNEL="${KERNEL:-}"
 if [ -z "$KERNEL" ]; then
   if [ ! -f "$KFETCH" ]; then
-    # Кэш пакета: битый недокачанный файл качаем заново
+    # Package cache: re-download a broken partial file
     if ! { [ -f build/kernel/pkg.tar.zst ] && bsdtar -tf build/kernel/pkg.tar.zst 2>/dev/null | grep -qE "vmlinuz$"; }; then
       rm -f build/kernel/pkg.tar.zst
       echo "[iso] resolving Arch kernel version..."
       KFILE="$(curl -fsSL --retry 3 --retry-all-errors --max-time 30 \
         "https://archlinux.org/packages/core/x86_64/linux/json/" | grep -o '"filename": "[^"]*"' | cut -d'"' -f4)"
-      [ -n "$KFILE" ] || { echo "ERROR: не смог узнать версию ядра (сеть?)"; exit 1; }
-      echo "[iso] downloading $KFILE (~170 МБ, один раз, дальше кэш)..."
+      [ -n "$KFILE" ] || { echo "ERROR: could not resolve kernel version (network?)"; exit 1; }
+      echo "[iso] downloading $KFILE (~170 MB, once, then cached)..."
       mkdir -p build/kernel
       curl -fSL --retry 3 --retry-all-errors -o "build/kernel/pkg.tar.zst" \
         "https://geo.mirror.pkgbuild.com/core/os/x86_64/$KFILE"
@@ -31,10 +31,10 @@ if [ -z "$KERNEL" ]; then
       echo "[iso] cached kernel package OK"
     fi
     echo "[iso] extracting vmlinuz..."
-    # Раскладка пакета менялась: раньше boot/vmlinuz-linux,
-    # теперь usr/lib/modules/<ver>/vmlinuz — ищем динамически.
+    # Package layout changed over time: was boot/vmlinuz-linux,
+    # now usr/lib/modules/<ver>/vmlinuz — locate dynamically.
     VMLINUZ_PATH="$(bsdtar -tf "build/kernel/pkg.tar.zst" 2>/dev/null | grep -E "vmlinuz$" | head -1)"
-    [ -n "$VMLINUZ_PATH" ] || { echo "ERROR: vmlinuz не найден в пакете ядра"; exit 1; }
+    [ -n "$VMLINUZ_PATH" ] || { echo "ERROR: vmlinuz not found in kernel package"; exit 1; }
     if command -v bsdtar >/dev/null 2>&1; then
       bsdtar -xf "build/kernel/pkg.tar.zst" -C build/kernel "$VMLINUZ_PATH"
     else
@@ -47,11 +47,11 @@ if [ -z "$KERNEL" ]; then
   fi
   KERNEL="$KFETCH"
 fi
-[ -f "$KERNEL" ] || { echo "ERROR: ядро не найдено: $KERNEL"; exit 1; }
+[ -f "$KERNEL" ] || { echo "ERROR: kernel not found: $KERNEL"; exit 1; }
 
-[ -f "$INITRAMFS" ] || { echo "ERROR: $INITRAMFS нет. Сначала ./build.sh initramfs"; exit 1; }
+[ -f "$INITRAMFS" ] || { echo "ERROR: no $INITRAMFS. Run ./build.sh initramfs first"; exit 1; }
 
-command -v grub-mkrescue >/dev/null || { echo "ERROR: нет grub-mkrescue. Запусти ./scripts/check-deps.sh"; exit 1; }
+command -v grub-mkrescue >/dev/null || { echo "ERROR: no grub-mkrescue. Run ./scripts/check-deps.sh"; exit 1; }
 
 echo "[iso] kernel: $KERNEL"
 echo "[iso] initramfs: $INITRAMFS"
@@ -61,7 +61,7 @@ mkdir -p "$ISODIR/boot/grub"
 cp "$KERNEL" "$ISODIR/boot/vmlinuz"
 cp "$INITRAMFS" "$ISODIR/boot/initramfs.cpio.gz"
 cp grub/grub.cfg "$ISODIR/boot/grub/grub.cfg"
-# Лого: оригинал + splash 1920x1080 для фона GRUB (генерируется из logo.png)
+# Logo: original + 1920x1080 GRUB background (generated from logo.png)
 cp logo.png "$ISODIR/boot/appleos-logo.png"
 python3 -c "
 from PIL import Image
@@ -72,7 +72,7 @@ bg = Image.new('RGB', (1920,1080), (0,0,0))
 bg.paste(logo, ((1920-logo.width)//2, (1080-logo.height)//2), logo)
 bg.save('$ISODIR/boot/grub/splash.png')
 print('[iso] splash generated')
-" 2>/dev/null || echo "[iso] warn: splash не сгенерирован (нет Pillow), едем без фона"
+" 2>/dev/null || echo "[iso] warn: splash not generated (no Pillow), continuing without background"
 
 echo "[iso] grub-mkrescue -> $OUT ..."
 grub-mkrescue -o "$OUT" "$ISODIR" 2>&1 | tail -5

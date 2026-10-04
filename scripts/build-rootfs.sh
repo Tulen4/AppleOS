@@ -1,5 +1,5 @@
 #!/bin/bash
-# Скачивает static BusyBox и собирает build/rootfs + overlay
+# Downloads static BusyBox and assembles build/rootfs + overlay
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -25,19 +25,19 @@ echo "[rootfs] installing busybox to $ROOTFS ..."
 cp build/busybox "$ROOTFS/bin/busybox"
 chmod +x "$ROOTFS/bin/busybox"
 
-# Симлинки на основные апплеты (остальные сделает `busybox --install -s` внутри ОС)
+# Symlinks for the main applets (the rest is done by `busybox --install -s` inside the OS)
 for app in sh ash mount umount echo ls cat ps dmesg uname hostname clear vi mkdir mknod switches; do
-  : # заглушка, реальные линки ниже
+  : # placeholder, real links below
 done
-# Генерим линки из списка --list, чтобы был полный набор команд
+# Generate links from --list so we get the full command set
 "$ROOTFS/bin/busybox" --list 2>/dev/null | while read -r applet; do
-  # пропускаем linuxrc/init, их роль играет наш /init
+  # skip linuxrc/init, our /init plays that role
   case "$applet" in linuxrc|init) continue;; esac
   ln -sf /bin/busybox "$ROOTFS/bin/$applet" 2>/dev/null || true
 done
 ln -sf /bin/busybox "$ROOTFS/sbin/init" 2>/dev/null || true
 mkdir -p "$ROOTFS/usr/bin" "$ROOTFS/usr/sbin"
-# Дублируем линки в /usr/bin для совместимости с PATH
+# Duplicate links into /usr/bin for PATH compatibility
 for f in "$ROOTFS"/bin/*; do
   base="$(basename "$f")"
   [ "$base" = "busybox" ] && continue
@@ -48,7 +48,7 @@ echo "[rootfs] applying overlay rootfs-overlay/ -> $ROOTFS ..."
 cp -a rootfs-overlay/. "$ROOTFS/"
 chmod +x "$ROOTFS/init"
 
-# /etc/os-release — лицо дистрибутива (AppleOS основан на Arch Linux)
+# /etc/os-release — the face of the distro (AppleOS is Arch-based)
 cat > "$ROOTFS/etc/os-release" <<'EOF'
 NAME="AppleOS"
 PRETTY_NAME="AppleOS 0.3.0 (minimal, Arch-compatible)"
@@ -64,7 +64,7 @@ BUG_REPORT_URL="https://example.invalid/appleos/bugs"
 LOGO=appleos-logo
 EOF
 
-# Логотип в систему (для neofetch / about)
+# Logo into the system (for neofetch / about)
 mkdir -p "$ROOTFS/usr/share/pixmaps"
 cp logo.png "$ROOTFS/usr/share/pixmaps/appleos-logo.png" 2>/dev/null || true
 

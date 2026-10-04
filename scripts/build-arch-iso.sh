@@ -1,6 +1,6 @@
 #!/bin/bash
-# Сборка AppleOS как Arch-based Live ISO через mkarchiso. Требует sudo.
-# Использование: ./scripts/build-arch-iso.sh  (или ./build.sh arch)
+# Build AppleOS as an Arch-based Live ISO via mkarchiso. Needs sudo.
+# Usage: ./scripts/build-arch-iso.sh  (or ./build.sh arch)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -8,23 +8,23 @@ WORK="build/archiso"
 OUT="build/arch-out"
 MKWORK="build/mkwork"
 
-command -v mkarchiso >/dev/null || { echo "ERROR: нет mkarchiso. На Arch: sudo pacman -S archiso. На другом дистрибутиве: ./scripts/build-arch-docker.sh"; exit 1; }
-command -v repo-add >/dev/null || { echo "ERROR: нет repo-add. На Arch: sudo pacman -S pacman-contrib. На другом дистрибутиве: ./scripts/build-arch-docker.sh"; exit 1; }
-[ -d /usr/share/archiso/configs/releng ] || { echo "ERROR: нет профиля releng (пакет archiso). На другом дистрибутиве: ./scripts/build-arch-docker.sh"; exit 1; }
+command -v mkarchiso >/dev/null || { echo "ERROR: no mkarchiso. On Arch: sudo pacman -S archiso. On another distro: ./scripts/build-arch-docker.sh"; exit 1; }
+command -v repo-add >/dev/null || { echo "ERROR: no repo-add. On Arch: sudo pacman -S pacman-contrib. On another distro: ./scripts/build-arch-docker.sh"; exit 1; }
+[ -d /usr/share/archiso/configs/releng ] || { echo "ERROR: no releng profile (archiso package). On another distro: ./scripts/build-arch-docker.sh"; exit 1; }
 
 echo "[arch] preparing profile in $WORK ..."
-# workdir прошлых запусков принадлежит root (создан под sudo) — чистим через sudo при нужде
+# Previous workdirs belong to root (created under sudo) — clean via sudo if needed
 clean_dir() { [ -e "$1" ] || return 0; rm -rf "$1" 2>/dev/null || sudo rm -rf "$1"; }
 clean_dir "$WORK"
 clean_dir "$OUT"
 clean_dir "$MKWORK"
-clean_dir ./work   # дефолтный workdir старых запусков
+clean_dir ./work   # default workdir of old runs
 mkdir -p "$WORK" "$OUT" "$MKWORK"
 cp -a /usr/share/archiso/configs/releng/. "$WORK/"
-# Поверх — наши файлы AppleOS
+# Overlay — our AppleOS files
 cp -a arch-profile/profiledef.sh arch-profile/pacman.conf arch-profile/packages.x86_64 "$WORK/"
 cp -a arch-profile/airootfs/. "$WORK/airootfs/"
-# Лого всегда свежее из корня репо
+# Logos always fresh from the repo root
 mkdir -p "$WORK/airootfs/usr/share/pixmaps" "$WORK/airootfs/etc/calamares/branding/appleos" \
          "$WORK/airootfs/usr/share/fastfetch/logos" "$WORK/airootfs/etc/xdg/fastfetch" \
          "$WORK/airootfs/etc/skel/.config/fastfetch"
@@ -32,23 +32,23 @@ cp logo.png "$WORK/airootfs/usr/share/pixmaps/appleos-logo.png"
 cp logo.png "$WORK/airootfs/etc/calamares/branding/appleos/logo.png"
 cp fastfetch.txt "$WORK/airootfs/usr/share/fastfetch/logos/appleos.txt"
 
-# Переименовать пункты загрузки Arch -> AppleOS (syslinux + grub + systemd-boot)
+# Rename boot entries Arch -> AppleOS (syslinux + grub + systemd-boot)
 grep -rl "Arch Linux" "$WORK/syslinux" "$WORK/efiboot" "$WORK/grub" 2>/dev/null | xargs -r sed -i 's/Arch Linux/AppleOS/g' 2>/dev/null || true
 grep -rl "archlinux" "$WORK/syslinux" "$WORK/efiboot" 2>/dev/null | xargs -r sed -i 's/archlinux/appleos/g' 2>/dev/null || true
 
-# Calamares с нашими конфигами: перепаковка пакета (иначе pacstrap падает
-# с "exists in filesystem": overlay копируется раньше, а --overwrite там нет).
-# PACMAN_CONFIG: резолв calamares через конфиг профиля (там репа EndeavourOS).
+# Calamares with our configs: repacked package (otherwise pacstrap fails
+# with "exists in filesystem": the overlay is copied first, and there is no --overwrite).
+# PACMAN_CONFIG: resolve calamares via the profile config (it has the EndeavourOS repo).
 export PACMAN_CONFIG="$(pwd)/$WORK/pacman.conf"
 ./scripts/mk-calamares-pkg.sh "$WORK"
 
-echo "[arch] running mkarchiso (нужен sudo, долгая сборка, ~1-2 ГБ загрузок) ..."
-# Наш перепакованный calamares собирается заново при каждом прогоне (меняется sha256),
-# а pacstrap с -c подхватил бы вчерашнюю копию из общего кэша и упал бы на checksum.
-# Маска только наши файлы — остальной кэш не трогаем.
+echo "[arch] running mkarchiso (needs sudo, long build, ~1-2 GB downloads) ..."
+# Our repacked calamares is rebuilt on every run (sha256 changes),
+# and pacstrap with -c would pick yesterday's copy from the shared cache and fail the checksum.
+# The mask only covers our files — the rest of the cache is untouched.
 sudo rm -f /var/cache/pacman/pkg/calamares-*appleos1*.pkg.tar.zst
 sudo mkarchiso -v -w "$MKWORK" -o "$OUT" "$WORK"
 
 echo ""
-echo "=== ГОТОВО ==="
+echo "=== DONE ==="
 ls -lh "$OUT"/*.iso

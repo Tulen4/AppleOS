@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=AppleOS Welcome
+Name[ru]=AppleOS Welcome
+Exec=/usr/local/bin/appleos-welcome
+Icon=/usr/share/pixmaps/appleos-logo.png
+Terminal=false
+Categories=System;Settings;
+X-GNOME-Autostart-enabled=true

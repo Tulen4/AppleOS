@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=AppleOS Welcome
+Name[ru]=AppleOS Welcome
+Comment=Install messengers, dev tools, browsers, media, office, games
+Comment[ru]=Добрать мессенджеры, dev-инструменты, браузеры, медиа, офис, игры
+Exec=/usr/local/bin/appleos-welcome
+Icon=/usr/share/pixmaps/appleos-logo.png
+Terminal=false
+Categories=System;Settings;

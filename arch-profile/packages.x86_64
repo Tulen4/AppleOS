@@ -144,3 +144,5 @@ pciutils
 mesa
 vulkan-icd-loader
 zenity
+yay
+plymouth

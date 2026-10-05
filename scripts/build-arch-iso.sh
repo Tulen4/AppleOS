@@ -36,6 +36,21 @@ cp fastfetch.txt "$WORK/airootfs/usr/share/fastfetch/logos/appleos.txt"
 grep -rl "Arch Linux" "$WORK/syslinux" "$WORK/efiboot" "$WORK/grub" 2>/dev/null | xargs -r sed -i 's/Arch Linux/AppleOS/g' 2>/dev/null || true
 grep -rl "archlinux" "$WORK/syslinux" "$WORK/efiboot" 2>/dev/null | xargs -r sed -i 's/archlinux/appleos/g' 2>/dev/null || true
 
+# Boot branding: apple splash for the syslinux (BIOS) menu + `splash` on live
+# kernel cmdlines so plymouth shows (syslinux APPEND + systemd-boot options).
+python3 -c "
+from PIL import Image
+logo = Image.open('logo.png').convert('RGBA')
+s = 1.5
+logo = logo.resize((int(logo.width*s), int(logo.height*s)), Image.NEAREST)
+bg = Image.new('RGB', (640, 480), (0, 0, 0))
+bg.paste(logo, ((640-logo.width)//2, (480-logo.height)//2), logo)
+bg.save('$WORK/syslinux/splash.png')
+print('[arch] syslinux splash generated')
+" 2>/dev/null || echo "[arch] warn: syslinux splash skipped (no Pillow)"
+grep -rl "archisosearchuuid=%ARCHISO_UUID%" "$WORK/syslinux" "$WORK/efiboot" 2>/dev/null \
+  | xargs -r sed -i 's/archisosearchuuid=%ARCHISO_UUID%/archisosearchuuid=%ARCHISO_UUID% splash/' 2>/dev/null || true
+
 # Calamares with our configs: repacked package (otherwise pacstrap fails
 # with "exists in filesystem": the overlay is copied first, and there is no --overwrite).
 # PACMAN_CONFIG: resolve calamares via the profile config (it has the EndeavourOS repo).

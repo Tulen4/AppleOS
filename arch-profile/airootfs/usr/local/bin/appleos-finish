@@ -59,4 +59,39 @@ if grep -q "^\[appleos-local\]" /etc/pacman.conf 2>/dev/null; then
   echo "appleos-local repo removed from target"
 fi
 
+# 9. GRUB branding: AppleOS theme + distributor, splash for plymouth.
+if [ -f /usr/share/grub/themes/appleos/theme.txt ]; then
+  if grep -q '^GRUB_THEME=' /etc/default/grub 2>/dev/null; then
+    sed -i 's|^GRUB_THEME=.*|GRUB_THEME="/usr/share/grub/themes/appleos/theme.txt"|' /etc/default/grub
+  else
+    echo 'GRUB_THEME="/usr/share/grub/themes/appleos/theme.txt"' >> /etc/default/grub
+  fi
+  grep -q '^GRUB_GFXMODE=' /etc/default/grub 2>/dev/null \
+    || echo 'GRUB_GFXMODE=1920x1080,auto' >> /etc/default/grub
+  if grep -q '^GRUB_DISTRIBUTOR=' /etc/default/grub 2>/dev/null; then
+    sed -i 's|^GRUB_DISTRIBUTOR=.*|GRUB_DISTRIBUTOR="AppleOS"|' /etc/default/grub
+  else
+    echo 'GRUB_DISTRIBUTOR="AppleOS"' >> /etc/default/grub
+  fi
+  if grep -q '^GRUB_CMDLINE_LINUX_DEFAULT=' /etc/default/grub 2>/dev/null; then
+    grep -q 'splash' /etc/default/grub \
+      || sed -i 's|^GRUB_CMDLINE_LINUX_DEFAULT="\([^"]*\)"|GRUB_CMDLINE_LINUX_DEFAULT="\1 splash"|' /etc/default/grub
+  else
+    echo 'GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet splash"' >> /etc/default/grub
+  fi
+  grub-mkconfig -o /boot/grub/grub.cfg >>"$LOG" 2>&1 || echo "WARN: grub-mkconfig failed"
+  echo "grub branded (theme, distributor, splash)"
+fi
+
+# 10. Plymouth in the target initramfs (splash at every boot).
+if [ -f /etc/mkinitcpio.conf ] && ! grep -qE 'HOOKS=.*plymouth' /etc/mkinitcpio.conf; then
+  if grep -qE 'HOOKS=\([^)]*\bkms\b' /etc/mkinitcpio.conf; then
+    sed -i -E 's/(HOOKS=\([^)]*\bkms\b)/\1 plymouth/' /etc/mkinitcpio.conf
+  else
+    sed -i -E 's/(HOOKS=\([^)]*\budev\b)/\1 plymouth/' /etc/mkinitcpio.conf
+  fi
+  mkinitcpio -P >>"$LOG" 2>&1 || echo "WARN: mkinitcpio failed"
+  echo "plymouth hook enabled"
+fi
+
 echo "=== appleos-finish done ==="

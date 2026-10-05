@@ -1,0 +1,13 @@
+[SddmGreeterTheme]
+Name=AppleOS
+Description=AppleOS login screen
+Author=AppleOS
+Copyright=(c) 2026 AppleOS
+Type=sddm-theme
+Version=0.3.0
+License=GPL-3.0-only
+MainScript=Main.qml
+ConfigFile=theme.conf
+Theme-Id=appleos
+Theme-API=2.0
+QtVersion=6

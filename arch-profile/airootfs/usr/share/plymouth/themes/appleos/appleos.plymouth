@@ -1,0 +1,8 @@
+[AppleOS]
+Name=AppleOS
+Description=AppleOS boot splash
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/appleos
+ScriptFile=/usr/share/plymouth/themes/appleos/appleos.script

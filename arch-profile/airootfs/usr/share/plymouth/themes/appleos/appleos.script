@@ -1,0 +1,49 @@
+# AppleOS plymouth theme: centered apple + progress bar.
+# No text rendering on purpose (no fonts guaranteed in initramfs);
+# password prompts degrade to simple bullet boxes.
+
+Window.SetBackgroundTopColor (0, 0, 0);
+Window.SetBackgroundBottomColor (0, 0, 0);
+
+logo.image = Image ("appleos-logo.png");
+logo.sprite = Sprite (logo.image);
+logo.x = Window.GetX () + Window.GetWidth () / 2 - logo.image.GetWidth () / 2;
+logo.y = Window.GetY () + Window.GetHeight () / 2 - logo.image.GetHeight () / 2 - 30;
+logo.sprite.SetPosition (logo.x, logo.y, 100);
+
+bar_bg.image = Image ("bar-bg.png");
+bar_bg.sprite = Sprite (bar_bg.image);
+bar.x = Window.GetX () + Window.GetWidth () / 2 - 110;
+bar.y = logo.y + logo.image.GetHeight () + 28;
+bar_bg.sprite.SetPosition (bar.x, bar.y, 100);
+
+bar_fg.image = Image ("bar-fg.png");
+progress.sprite = Sprite (bar_fg.image);
+progress.sprite.SetPosition (bar.x, bar.y, 101);
+
+fun boot_progress_callback (duration, progress) {
+    if (progress > 1)
+        progress = 1;
+    w = Math.Int (220 * progress);
+    if (w < 2)
+        w = 2;
+    progress.sprite.SetImage (bar_fg.image.Scale (w, 6));
+}
+
+fun message_callback (text) {
+    # text rendering needs fonts; ignore, keep the splash clean
+}
+
+fun password_callback (prompt, bullets) {
+    # LUKS prompt: reuse the progress bar, width ~ bullet count (no text, no sprites leak)
+    n = Math.Int (bullets);
+    if (n > 16)
+        n = 16;
+    w = Math.Int (220 * n / 16);
+    if (w < 2)
+        w = 2;
+    progress.sprite.SetImage (bar_fg.image.Scale (w, 6));
+}
+
+fun quit_callback () {
+}

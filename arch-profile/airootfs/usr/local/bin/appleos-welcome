@@ -1,0 +1,181 @@
+#!/bin/bash
+# AppleOS Welcome — post-install app picker: messengers, dev tools, browsers,
+# media, office, games. Runs on first login (skel autostart), re-runnable
+# from the menu. English/Russian (auto from $LANG). Skipped in live sessions.
+set -u
+
+ICON="/usr/share/pixmaps/appleos-logo.png"
+FLAGDIR="$HOME/.config/appleos-welcome"
+LOG="$FLAGDIR/install.log"
+
+# Not for the live session (live has its own installer flow)
+[ -d /run/archiso/bootmnt ] && exit 0
+# Already completed once — use the menu entry to run again
+[ -f "$FLAGDIR/done" ] && exit 0
+mkdir -p "$FLAGDIR"
+
+case "${LANG:-en}" in
+  ru*) L=ru ;;
+  *)   L=en ;;
+esac
+
+if [ "$L" = ru ]; then
+  T_WELCOME="Добро пожаловать в AppleOS"
+  T_ABOUT="Добери нужные приложения. Отмеченное поставится из репозиториев, (AUR) — из AUR через yay."
+  T_COMM="Общение"; T_DEV="Разработка"; T_WEB="Браузеры"; T_MEDIA="Медиа"; T_OFFICE="Офис"; T_GAMES="Игры"; T_TOOLS="Утилиты"
+  T_STEP="Шаг %s/7 — %s (можно пропустить)"
+  T_PASS="Пароль sudo для установки пакетов:"
+  T_PASS_FAIL="Неверный пароль. Еще раз?"
+  T_INSTALLING="Ставлю пакеты"
+  T_DONE_OK="Готово! Установлено: %s."
+  T_DONE_FAIL="Готово. Не поставилось:%s\nЛог: %s"
+  T_NORUN="Ничего не выбрано — до встречи в меню «AppleOS Welcome»."
+  T_AUR_ONLINE="Для пакетов (AUR) нужен интернет!"
+  T_YAY_FAIL="Не смог поставить yay — пакеты (AUR) пропущены."
+else
+  T_WELCOME="Welcome to AppleOS"
+  T_ABOUT="Pick the apps you need. Checked items install from the repos, (AUR) ones via yay."
+  T_COMM="Communication"; T_DEV="Development"; T_WEB="Browsers"; T_MEDIA="Media"; T_OFFICE="Office"; T_GAMES="Games"; T_TOOLS="Tools"
+  T_STEP="Step %s/7 — %s (skippable)"
+  T_PASS="Sudo password to install packages:"
+  T_PASS_FAIL="Wrong password. Retry?"
+  T_INSTALLING="Installing packages"
+  T_DONE_OK="Done! Installed: %s."
+  T_DONE_FAIL="Done. Failed:%s\nLog: %s"
+  T_NORUN="Nothing selected — find me again in the «AppleOS Welcome» menu."
+  T_AUR_ONLINE="Packages marked (AUR) need internet!"
+  T_YAY_FAIL="Could not install yay — (AUR) packages skipped."
+fi
+
+# --- sudo password once, then keep the timestamp warm ---
+PASS=""
+for _ in 1 2 3; do
+  PASS="$(zenity --entry --hide-text --window-icon="$ICON" --title="$T_WELCOME" \
+    --text="$T_PASS" 2>/dev/null)" || exit 0
+  printf '%s\n' "$PASS" | sudo -Sv >/dev/null 2>&1 && break
+  PASS=""
+  zenity --error --window-icon="$ICON" --text="$T_PASS_FAIL" 2>/dev/null || exit 0
+done
+[ -n "$PASS" ] || exit 0
+sudo_keep() { printf '%s\n' "$PASS" | sudo -Sv >/dev/null 2>&1; }
+
+# --- one checklist dialog per category; rows: DEFAULT ID NAME DESC ---
+ask_cat() {
+  local title="$1" text="$2"; shift 2
+  zenity --list --checklist --print-column=2 --separator=" " --hide-column=2 \
+    --window-icon="$ICON" --title="$title" --text="$text" --width=640 --height=400 \
+    --column="" --column="id" --column="App" --column="Description" "$@" 2>/dev/null
+}
+
+SEL=""
+# shellcheck disable=SC2059
+SEL="$SEL $(ask_cat "$T_WELCOME" "$(printf "$T_STEP" 1 "$T_COMM")" \
+  TRUE telegram-desktop "Telegram" "Messenger" \
+  FALSE discord "Discord" "Voice, video, communities" \
+  FALSE signal-desktop "Signal" "Private messenger" \
+  FALSE element-desktop "Element" "Matrix client" \
+  FALSE thunderbird "Thunderbird" "Mail + calendar" \
+  FALSE viber "Viber (AUR)" "Messenger" \
+  FALSE zoom "Zoom (AUR)" "Video conferencing")"
+
+SEL="$SEL $(ask_cat "$T_WELCOME" "$(printf "$T_STEP" 2 "$T_DEV")" \
+  TRUE code "VS Code" "Editor (open-source build)" \
+  FALSE visual-studio-code-bin "VS Code (AUR)" "Official Microsoft build" \
+  FALSE intellij-idea-community-edition "IntelliJ IDEA CE" "Java/Kotlin IDE" \
+  FALSE pycharm-community-edition "PyCharm CE" "Python IDE" \
+  FALSE android-studio "Android Studio (AUR)" "Android IDE" \
+  FALSE git "Git" "Version control" \
+  FALSE docker "Docker" "Containers" \
+  FALSE docker-compose "Docker Compose" "Multi-container apps" \
+  FALSE neovim "Neovim" "Terminal editor" \
+  FALSE jdk-openjdk "OpenJDK" "Java development kit")"
+
+SEL="$SEL $(ask_cat "$T_WELCOME" "$(printf "$T_STEP" 3 "$T_WEB")" \
+  TRUE firefox "Firefox" "Browser" \
+  FALSE chromium "Chromium" "Browser" \
+  FALSE vivaldi "Vivaldi" "Browser" \
+  FALSE google-chrome "Chrome (AUR)" "Browser" \
+  FALSE brave-bin "Brave (AUR)" "Browser")"
+
+SEL="$SEL $(ask_cat "$T_WELCOME" "$(printf "$T_STEP" 4 "$T_MEDIA")" \
+  TRUE vlc "VLC" "Video player" \
+  FALSE obs-studio "OBS Studio" "Streaming + recording" \
+  FALSE gimp "GIMP" "Image editor" \
+  FALSE kdenlive "Kdenlive" "Video editor" \
+  FALSE audacity "Audacity" "Audio editor" \
+  FALSE spotify "Spotify (AUR)" "Music")"
+
+SEL="$SEL $(ask_cat "$T_WELCOME" "$(printf "$T_STEP" 5 "$T_OFFICE")" \
+  FALSE libreoffice-fresh "LibreOffice" "Office suite" \
+  FALSE onlyoffice-bin "OnlyOffice (AUR)" "Office suite")"
+
+SEL="$SEL $(ask_cat "$T_WELCOME" "$(printf "$T_STEP" 6 "$T_GAMES")" \
+  FALSE steam "Steam" "Games (enables multilib)" \
+  FALSE lutris "Lutris" "Game manager" \
+  FALSE wine "Wine" "Windows apps (enables multilib)" \
+  FALSE heroic-games-launcher-bin "Heroic (AUR)" "Epic/GOG client")"
+
+SEL="$SEL $(ask_cat "$T_WELCOME" "$(printf "$T_STEP" 7 "$T_TOOLS")" \
+  FALSE btop "btop" "System monitor" \
+  FALSE flatpak "Flatpak" "Sandboxed apps")"
+
+SEL="$(echo "$SEL" | tr -s ' ' | sed 's/^ //;s/ $//')"
+[ -n "$SEL" ] || { zenity --info --window-icon="$ICON" --text="$T_NORUN" 2>/dev/null; exit 0; }
+
+is_aur() {
+  case "$1" in
+    viber|zoom|visual-studio-code-bin|android-studio|google-chrome|brave-bin|spotify|onlyoffice-bin|heroic-games-launcher-bin) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+# --- yay for AUR items ---
+NEED_AUR=false
+for p in $SEL; do is_aur "$p" && NEED_AUR=true && break; done
+if $NEED_AUR; then
+  if ! command -v yay >/dev/null 2>&1; then
+    sudo_keep
+    if ! sudo -n pacman -S --needed --noconfirm yay >>"$LOG" 2>&1; then
+      zenity --error --window-icon="$ICON" --text="$T_YAY_FAIL" 2>/dev/null
+      SEL="$(for p in $SEL; do is_aur "$p" || echo "$p"; done)"
+    fi
+  fi
+fi
+
+# --- multilib for steam/wine ---
+if echo " $SEL " | grep -qE " (steam|wine) "; then
+  if ! grep -q '^\[multilib\]' /etc/pacman.conf 2>/dev/null; then
+    sudo_keep
+    sudo -n sed -i '/^#\[multilib\]$/,/^#Include = \/etc\/pacman.d\/mirrorlist$/ s/^#//' /etc/pacman.conf
+    sudo -n pacman -Sy >>"$LOG" 2>&1
+  fi
+fi
+
+# --- install with progress ---
+N="$(echo "$SEL" | wc -w)"
+i=0
+FAILED=""
+{
+  for p in $SEL; do
+    i=$((i + 1))
+    echo $((i * 100 / N))
+    # shellcheck disable=SC2059
+    echo "# $p ($i/$N)"
+    sudo_keep
+    if is_aur "$p"; then
+      sudo -n yay -S --needed --noconfirm "$p" >>"$LOG" 2>&1 || FAILED="$FAILED $p"
+    else
+      sudo -n pacman -S --needed --noconfirm "$p" >>"$LOG" 2>&1 || FAILED="$FAILED $p"
+    fi
+  done
+} | zenity --progress --window-icon="$ICON" --title="$T_INSTALLING" --auto-close --width=400 2>/dev/null
+
+PASS="" # forget the password
+touch "$FLAGDIR/done"
+NOK=$((N - $(echo "$FAILED" | wc -w)))
+# shellcheck disable=SC2059
+if [ -z "$FAILED" ]; then
+  zenity --info --window-icon="$ICON" --text="$(printf "$T_DONE_OK" "$NOK")" 2>/dev/null
+else
+  zenity --warning --window-icon="$ICON" --text="$(printf "$T_DONE_FAIL" "$FAILED" "$LOG")" 2>/dev/null
+fi

@@ -29,4 +29,5 @@ file_permissions=(
   ["/usr/local/bin/appleos-live"]="0:0:755"
   ["/usr/local/bin/appleos-wifi"]="0:0:755"
   ["/usr/local/bin/appleos-installer-chooser"]="0:0:755"
+  ["/usr/local/bin/appleos-welcome"]="0:0:755"
 )

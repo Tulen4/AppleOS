@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=AppleOS Update
+Name[ru]=Обновление AppleOS
+Comment=Update Apple Shell and system scripts from GitHub
+Comment[ru]=Обновить шелл и скрипты с GitHub
+Exec=/usr/local/bin/appleos-update
+Icon=/usr/share/pixmaps/appleos-logo.png
+Terminal=false
+Categories=System;Settings;

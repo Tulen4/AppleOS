@@ -31,6 +31,23 @@ mkdir -p "$WORK/airootfs/usr/share/pixmaps" "$WORK/airootfs/etc/calamares/brandi
 cp logo.png "$WORK/airootfs/usr/share/pixmaps/appleos-logo.png"
 cp logo.png "$WORK/airootfs/etc/calamares/branding/appleos/logo.png"
 cp fastfetch.txt "$WORK/airootfs/usr/share/fastfetch/logos/appleos.txt"
+# Apple Shell: deploy configs (single source of truth is apple-shell/)
+AS="apple-shell"
+SK="$WORK/airootfs/etc/skel/.config"
+SH="$WORK/airootfs/usr/share/apple-shell"
+mkdir -p "$SK/labwc" "$SK/waybar" "$SK/fuzzel" "$SK/foot" "$SK/mako" "$SH/waybar"
+cp "$AS/labwc/rc.xml" "$AS/labwc/autostart" "$AS/labwc/environment" "$AS/labwc/menu.xml" "$SK/labwc/"
+cp "$AS/waybar/config-top.json" "$AS/waybar/config-dock.json" "$SK/waybar/"
+cp "$AS"/waybar/style*.css "$SK/waybar/"
+cp "$AS/fuzzel/fuzzel.ini" "$SK/fuzzel/"
+cp "$AS/foot/foot.ini" "$SK/foot/"
+cp "$AS/mako/config" "$SK/mako/config"
+cp "$AS/wallpaper.png" "$SH/wallpaper.png"
+cp VERSION "$SH/VERSION"
+cp "$AS"/waybar/style-top-dark.css "$AS"/waybar/style-top-light.css \
+   "$AS"/waybar/style-dock-dark.css "$AS"/waybar/style-dock-light.css "$SH/waybar/"
+cp "$AS/scripts/apple-shell-settings" "$WORK/airootfs/usr/local/bin/apple-shell-settings"
+chmod +x "$SK/labwc/autostart" "$WORK/airootfs/usr/local/bin/apple-shell-settings"
 
 # Rename boot entries Arch -> AppleOS (syslinux + grub + systemd-boot)
 grep -rl "Arch Linux" "$WORK/syslinux" "$WORK/efiboot" "$WORK/grub" 2>/dev/null | xargs -r sed -i 's/Arch Linux/AppleOS/g' 2>/dev/null || true

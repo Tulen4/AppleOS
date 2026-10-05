@@ -1,0 +1,147 @@
+<?xml version="1.0"?>
+<!-- Apple Shell :: labwc config — macOS-style keybinds on a plain stacking WM.
+     Super = macOS Command. Full syntax: labwc-actions(5). -->
+<labwc_config>
+  <desktops>
+    <number>4</number>
+    <popupTime>600</popupTime>
+  </desktops>
+
+  <keyboard>
+    <default />
+
+    <!-- Spotlight / app menu -->
+    <keybind key="W-space">
+      <action name="Execute" command="fuzzel" />
+    </keybind>
+    <keybind key="W-d">
+      <action name="Execute" command="fuzzel" />
+    </keybind>
+    <!-- Terminal -->
+    <keybind key="W-Return">
+      <action name="Execute" command="foot" />
+    </keybind>
+    <keybind key="W-t">
+      <action name="Execute" command="foot" />
+    </keybind>
+    <!-- Browser -->
+    <keybind key="W-w">
+      <action name="Execute" command="sh -c 'firefox || chromium || xdg-open about:blank'" />
+    </keybind>
+    <!-- File manager -->
+    <keybind key="W-e">
+      <action name="Execute" command="sh -c 'cosmic-files || thunar'" />
+    </keybind>
+    <!-- Apple Shell settings -->
+    <keybind key="W-i">
+      <action name="Execute" command="apple-shell-settings" />
+    </keybind>
+    <!-- Close window -->
+    <keybind key="W-q">
+      <action name="Close" />
+    </keybind>
+    <!-- Minimize to dock -->
+    <keybind key="W-m">
+      <action name="Iconify" />
+    </keybind>
+    <!-- Fullscreen -->
+    <keybind key="W-f">
+      <action name="ToggleFullscreen" />
+    </keybind>
+    <!-- Zoom / maximize -->
+    <keybind key="W-S-f">
+      <action name="ToggleMaximize" />
+    </keybind>
+    <!-- Snap halves / quarters (drag to edges also works) -->
+    <keybind key="W-Left">
+      <action name="SnapToEdge" direction="left" />
+    </keybind>
+    <keybind key="W-Right">
+      <action name="SnapToEdge" direction="right" />
+    </keybind>
+    <keybind key="W-Up">
+      <action name="ToggleMaximize" />
+    </keybind>
+    <keybind key="W-Down">
+      <action name="Iconify" />
+    </keybind>
+    <!-- Spaces: workspaces -->
+    <keybind key="W-1">
+      <action name="GoToDesktop" to="1" />
+    </keybind>
+    <keybind key="W-2">
+      <action name="GoToDesktop" to="2" />
+    </keybind>
+    <keybind key="W-3">
+      <action name="GoToDesktop" to="3" />
+    </keybind>
+    <keybind key="W-4">
+      <action name="GoToDesktop" to="4" />
+    </keybind>
+    <keybind key="W-S-1">
+      <action name="SendToDesktop" to="1" />
+    </keybind>
+    <keybind key="W-S-2">
+      <action name="SendToDesktop" to="2" />
+    </keybind>
+    <keybind key="W-S-3">
+      <action name="SendToDesktop" to="3" />
+    </keybind>
+    <keybind key="W-S-4">
+      <action name="SendToDesktop" to="4" />
+    </keybind>
+    <keybind key="C-Left">
+      <action name="GoToDesktop" to="left" wrap="yes" />
+    </keybind>
+    <keybind key="C-Right">
+      <action name="GoToDesktop" to="right" wrap="yes" />
+    </keybind>
+    <!-- App switcher -->
+    <keybind key="W-Tab">
+      <action name="NextWindow" />
+    </keybind>
+    <!-- Show desktop peek -->
+    <keybind key="W-S-d">
+      <action name="ToggleShowDesktop" />
+    </keybind>
+    <!-- Screenshots (macOS Shift+Cmd+3/4) -->
+    <keybind key="W-S-3">
+      <action name="Execute" command="sh -c 'grim ~/Pictures/shot-$(date +%F-%H%M%S).png'" />
+    </keybind>
+    <keybind key="W-S-4">
+      <action name="Execute" command="sh -c 'grim -g &quot;$(slurp)&quot; ~/Pictures/shot-$(date +%F-%H%M%S).png'" />
+    </keybind>
+    <!-- Lock -->
+    <keybind key="W-l">
+      <action name="Execute" command="swaylock -f" />
+    </keybind>
+    <!-- Apple Shell settings (macOS Cmd+, preferences) -->
+    <keybind key="W-comma">
+      <action name="Execute" command="apple-shell-settings" />
+    </keybind>
+    <!-- Session -->
+    <keybind key="W-S-q">
+      <action name="Exit" />
+    </keybind>
+    <keybind key="W-S-r">
+      <action name="Reconfigure" />
+    </keybind>
+  </keyboard>
+
+  <mouse>
+    <default />
+    <context name="Root">
+      <mousebind button="Right" action="Press">
+        <action name="ShowMenu" menu="apple-menu" />
+      </mousebind>
+    </context>
+    <context name="Frame">
+      <mousebind button="A-Left" action="Drag">
+        <action name="Move" />
+      </mousebind>
+      <mousebind button="A-Right" action="Drag">
+        <action name="Resize" />
+      </mousebind>
+    </context>
+  </mouse>
+</labwc_config>

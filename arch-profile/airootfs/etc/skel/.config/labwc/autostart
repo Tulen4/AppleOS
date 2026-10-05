@@ -1,0 +1,27 @@
+#!/bin/sh
+# Apple Shell :: labwc autostart — menu bar, dock, wallpaper, helpers.
+# Executed by labwc on every login (see labwc(1): ~/.config/labwc/autostart).
+
+CFG="$HOME/.config"
+WALLPAPER="$(cat "$CFG/apple-shell/wallpaper" 2>/dev/null || echo /usr/share/apple-shell/wallpaper.png)"
+[ -f "$WALLPAPER" ] || WALLPAPER=/usr/share/apple-shell/wallpaper.png
+
+mkdir -p "$HOME/Pictures" "$CFG/apple-shell"
+
+# environment for user services
+dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP 2>/dev/null
+
+# wallpaper
+swaybg -i "$WALLPAPER" -m fill &
+# top menu bar + bottom dock (two waybar instances)
+waybar -c "$CFG/waybar/config-top.json" -s "$CFG/waybar/style.css" &
+waybar -c "$CFG/waybar/config-dock.json" -s "$CFG/waybar/style-dock.css" &
+# notifications, policy auth, tray network icon
+mako &
+/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &
+nm-applet --indicator &
+# clipboard history (macOS-like)
+wl-paste --type text --watch cliphist store &
+wl-paste --type image --watch cliphist store &
+# idle: lock after 10 min
+swayidle -w timeout 600 'swaylock -f' &

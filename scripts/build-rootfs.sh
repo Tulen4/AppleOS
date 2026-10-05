@@ -51,12 +51,12 @@ chmod +x "$ROOTFS/init"
 # /etc/os-release — the face of the distro (AppleOS is Arch-based)
 cat > "$ROOTFS/etc/os-release" <<'EOF'
 NAME="AppleOS"
-PRETTY_NAME="AppleOS 0.3.0 (minimal, Arch-compatible)"
+PRETTY_NAME="AppleOS 0.4.0 (minimal, Arch-compatible)"
 ID=appleos
 ID_LIKE=arch
 BASE=arch
-VERSION_ID="0.3.0"
-VERSION="0.3.0"
+VERSION_ID="0.4.0"
+VERSION="0.4.0"
 BUILD_ID="busybox-static"
 HOME_URL="https://example.invalid/appleos"
 SUPPORT_URL="https://wiki.archlinux.org/"

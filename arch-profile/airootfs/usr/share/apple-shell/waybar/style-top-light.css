@@ -1,0 +1,49 @@
+* {
+  font-family: "Inter", "JetBrainsMono Nerd Font", sans-serif;
+  font-size: 13px;
+  color: #1a1a1e;
+}
+
+window#waybar {
+  background: rgba(242, 242, 247, 0.78);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+#custom-apple {
+  font-size: 17px;
+  padding: 0 10px 0 14px;
+}
+
+#workspaces button {
+  padding: 0 9px;
+  color: #999999;
+  background: transparent;
+  border-radius: 8px;
+}
+
+#workspaces button.active {
+  color: #1a1a1e;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+#workspaces button.empty {
+  color: #bbbbbb;
+}
+
+#tray,
+#pulseaudio,
+#network,
+#battery,
+#custom-spotlight,
+#clock {
+  padding: 0 8px;
+}
+
+#custom-spotlight {
+  font-size: 14px;
+}
+
+#clock {
+  padding-right: 14px;
+  font-weight: bold;
+}

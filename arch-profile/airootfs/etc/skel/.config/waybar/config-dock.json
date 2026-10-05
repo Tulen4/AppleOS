@@ -1,0 +1,39 @@
+{
+  "layer": "top",
+  "position": "bottom",
+  "height": 58,
+  "exclusive": false,
+  "spacing": 0,
+  "margin-bottom": 10,
+  "modules-left": [],
+  "modules-center": ["custom/finder", "custom/terminal", "custom/browser", "custom/settings", "wlr/taskbar"],
+  "modules-right": [],
+  "custom/finder": {
+    "format": "",
+    "tooltip": "Files",
+    "on-click": "cosmic-files"
+  },
+  "custom/terminal": {
+    "format": "",
+    "tooltip": "Terminal",
+    "on-click": "foot"
+  },
+  "custom/browser": {
+    "format": "",
+    "tooltip": "Browser",
+    "on-click": "xdg-open about:blank"
+  },
+  "custom/settings": {
+    "format": "",
+    "tooltip": "Apple Shell Settings",
+    "on-click": "apple-shell-settings"
+  },
+  "wlr/taskbar": {
+    "format": "{icon}",
+    "icon-size": 30,
+    "icon-theme": "Papirus",
+    "on-click": "minimize-raise",
+    "on-click-middle": "close",
+    "ignore-list": []
+  }
+}

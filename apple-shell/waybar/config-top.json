@@ -1,0 +1,46 @@
+{
+  "layer": "top",
+  "position": "top",
+  "height": 34,
+  "spacing": 6,
+  "modules-left": ["custom/apple", "wlr/workspaces"],
+  "modules-center": [],
+  "modules-right": ["tray", "pulseaudio", "network", "battery", "custom/spotlight", "clock"],
+  "custom/apple": {
+    "format": "",
+    "tooltip": "AppleOS",
+    "on-click": "fuzzel"
+  },
+  "wlr/workspaces": {
+    "format": "{name}",
+    "on-click": "activate"
+  },
+  "tray": {
+    "spacing": 8
+  },
+  "pulseaudio": {
+    "format": "{icon} {volume}%",
+    "format-muted": "muted",
+    "format-icons": ["volume-mute", "volume-low", "volume-medium", "volume-high"],
+    "on-click": "pavucontrol"
+  },
+  "network": {
+    "format-wifi": "wifi {essid}",
+    "format-ethernet": "wired",
+    "format-disconnected": "offline",
+    "tooltip-format-wifi": "{essid} ({signalStrength}%)",
+    "on-click": "nm-connection-editor"
+  },
+  "battery": {
+    "format": "bat {capacity}%",
+    "format-charging": "chg {capacity}%"
+  },
+  "custom/spotlight": {
+    "format": "",
+    "tooltip": "Spotlight search",
+    "on-click": "fuzzel"
+  },
+  "clock": {
+    "format": "{:%a %d %b  %H:%M}"
+  }
+}

@@ -1,0 +1,52 @@
+* {
+  font-family: "Inter", "JetBrainsMono Nerd Font", sans-serif;
+  font-size: 22px;
+  color: white;
+}
+
+window#waybar {
+  background: transparent;
+}
+
+#custom-finder,
+#custom-terminal,
+#custom-browser,
+#custom-settings,
+#taskbar {
+  background: rgba(28, 28, 34, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+#custom-finder {
+  border-radius: 16px 0 0 16px;
+  padding: 6px 10px 6px 16px;
+  border-right: none;
+}
+
+#custom-terminal,
+#custom-browser,
+#custom-settings {
+  border-radius: 0;
+  padding: 6px 10px;
+  border-left: none;
+  border-right: none;
+}
+
+#taskbar {
+  border-radius: 0 16px 16px 0;
+  padding: 6px 14px 6px 10px;
+  border-left: none;
+}
+
+#taskbar button {
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+
+#taskbar button.active {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+#taskbar button.minimized {
+  border-bottom: 2px solid #888888;
+}

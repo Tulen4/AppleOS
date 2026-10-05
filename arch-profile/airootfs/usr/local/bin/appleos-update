@@ -1,0 +1,121 @@
+#!/bin/bash
+# AppleOS Update — updates Apple Shell + system scripts from GitHub.
+# Source: https://github.com/Tulen4/AppleOS
+#   appleos-update           interactive update (changelog, confirm, deploy)
+#   appleos-update --check   quiet check for the weekly timer (notifies only)
+# English/Russian (auto from $LANG). Needs git + network.
+set -u
+
+ICON="/usr/share/pixmaps/appleos-logo.png"
+UPSTREAM="https://github.com/Tulen4/AppleOS"
+CACHE="$HOME/.cache/appleos-upstream"
+SHARE_VER="/usr/share/apple-shell/VERSION"
+
+case "${LANG:-en}" in ru*) L=ru;; *) L=en;; esac
+
+if [ "$L" = ru ]; then
+  T_NO_NET="Нет сети — обновление невозможно."
+  T_NO_GIT="Нет git — поставь его (AppleOS Welcome → Разработка)."
+  T_UP2DATE="Обновлений нет."
+  T_FOUND="Найдены обновления AppleOS. Посмотреть что нового и обновить?"
+  T_LOG_TITLE="Что нового"
+  T_OK="Обновлено!"
+  T_FAIL="Обновление не удалось. Лог: %s"
+  T_PASS="Пароль sudo (запись в /usr):"
+  T_MINE="Обновить и мои настройки из новых дефолтов? (старые — в backup)"
+  T_DONE_MINE="Настройки обновлены, старые в %s"
+else
+  T_NO_NET="No network — cannot update."
+  T_NO_GIT="No git — install it (AppleOS Welcome → Development)."
+  T_UP2DATE="Already up to date."
+  T_FOUND="AppleOS updates found. See what's new and update?"
+  T_LOG_TITLE="What's new"
+  T_OK="Updated!"
+  T_FAIL="Update failed. Log: %s"
+  T_PASS="Sudo password (writes to /usr):"
+  T_MINE="Also refresh my configs from new defaults? (old ones go to backup)"
+  T_DONE_MINE="Configs refreshed, old ones in %s"
+fi
+
+LOG="$HOME/.cache/appleos-update.log"
+mkdir -p "$HOME/.cache"
+
+online() { curl -sI --max-time 8 https://github.com >/dev/null 2>&1; }
+need_ui=$([ "${1:-}" = "--check" ] && echo no || echo yes)
+
+if ! command -v git >/dev/null 2>&1; then
+  [ "$need_ui" = yes ] && zenity --error --window-icon="$ICON" --text="$T_NO_GIT" 2>/dev/null
+  exit 1
+fi
+if ! online; then
+  [ "$need_ui" = yes ] && zenity --error --window-icon="$ICON" --text="$T_NO_NET" 2>/dev/null
+  exit 1
+fi
+
+# Shallow cache clone (small: no ISOs in repo)
+[ -d "$CACHE/.git" ] || git clone -q --depth 1 "$UPSTREAM" "$CACHE" >>"$LOG" 2>&1 || exit 1
+git -C "$CACHE" fetch -q origin >>"$LOG" 2>&1 || exit 1
+LOCAL="$(git -C "$CACHE" rev-parse HEAD 2>/dev/null)"
+REMOTE="$(git ls-remote "$UPSTREAM" HEAD 2>/dev/null | awk '{print $1}')"
+[ -n "$REMOTE" ] && [ "$LOCAL" != "$REMOTE" ] || {
+  [ "$need_ui" = yes ] && zenity --info --window-icon="$ICON" --text="$T_UP2DATE" 2>/dev/null
+  exit 0
+}
+[ "$need_ui" = yes ] || {
+  # quiet timer mode: ping the user, details on manual run
+  notify-send -i "$ICON" "AppleOS" "$T_FOUND" 2>/dev/null \
+    || zenity --notification --window-icon="$ICON" --text="$T_FOUND" 2>/dev/null || true
+  exit 0
+}
+
+# Interactive: show changelog, confirm
+git -C "$CACHE" fetch -q --depth 1 origin >>"$LOG" 2>&1
+CHANGELOG="$(git -C "$CACHE" log --oneline HEAD..FETCH_HEAD 2>/dev/null | head -30)"
+[ -n "$CHANGELOG" ] || CHANGELOG="$REMOTE"
+zenity --question --window-icon="$ICON" --title="$T_LOG_TITLE" \
+  --text="$T_FOUND\n\n$CHANGELOG" --width=560 2>/dev/null || exit 0
+git -C "$CACHE" reset -q --hard FETCH_HEAD >>"$LOG" 2>&1 \
+  || { zenity --error --window-icon="$ICON" --text="$(printf "$T_FAIL" "$LOG")" 2>/dev/null; exit 1; }
+
+# Deploy: needs root for /usr + /etc/skel
+PASS="$(zenity --entry --hide-text --window-icon="$ICON" --text="$T_PASS" 2>/dev/null)" || exit 0
+printf '%s\n' "$PASS" | sudo -Sv >/dev/null 2>&1 || exit 1
+# shellcheck disable=SC2094
+{
+  # system scripts (shell itself included — safe, file replaced atomically)
+  for s in "$CACHE"/apple-shell/scripts/*; do
+    [ -f "$s" ] || continue
+    sudo -n cp "$s" /usr/local/bin/ && sudo -n chmod +x "/usr/local/bin/$(basename "$s")"
+  done
+  for s in appleos-welcome appleos-update appleos-wifi appleos-installer-chooser; do
+    [ -f "$CACHE/arch-profile/airootfs/usr/local/bin/$s" ] \
+      && sudo -n cp "$CACHE/arch-profile/airootfs/usr/local/bin/$s" /usr/local/bin/ \
+      && sudo -n chmod +x "/usr/local/bin/$s"
+  done
+  # shared assets + new skel defaults
+  sudo -n mkdir -p /usr/share/apple-shell
+  sudo -n cp "$CACHE/apple-shell/wallpaper.png" /usr/share/apple-shell/ 2>/dev/null
+  sudo -n cp "$CACHE"/apple-shell/waybar/style-*.css /usr/share/apple-shell/waybar/ 2>/dev/null
+  sudo -n cp "$CACHE/VERSION" /usr/share/apple-shell/VERSION 2>/dev/null
+  for d in labwc waybar fuzzel foot mako; do
+    [ -d "$CACHE/apple-shell/$d" ] || continue
+    sudo -n mkdir -p "/etc/skel/.config/$d"
+    sudo -n cp -r "$CACHE/apple-shell/$d/." "/etc/skel/.config/$d/"
+  done
+  echo "deploy rc=$?"
+} >>"$LOG" 2>&1 || { zenity --error --window-icon="$ICON" --text="$(printf "$T_FAIL" "$LOG")" 2>/dev/null; exit 1; }
+PASS=""
+
+# Personal configs refresh (optional, with backup)
+if zenity --question --window-icon="$ICON" --text="$T_MINE" 2>/dev/null; then
+  BK="$HOME/.config-backup-$(date +%F-%H%M)"
+  mkdir -p "$BK"
+  for d in labwc waybar fuzzel foot mako; do
+    [ -d "$HOME/.config/$d" ] && cp -r "$HOME/.config/$d" "$BK/" 2>/dev/null
+    [ -d "$CACHE/apple-shell/$d" ] && cp -r "$CACHE/apple-shell/$d/." "$HOME/.config/$d/" 2>/dev/null
+  done
+  # shellcheck disable=SC2059
+  zenity --info --window-icon="$ICON" --text="$(printf "$T_DONE_MINE" "$BK")" 2>/dev/null
+fi
+
+zenity --info --window-icon="$ICON" --text="$T_OK" 2>/dev/null

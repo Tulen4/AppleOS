@@ -5,7 +5,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-source VERSION 2>/dev/null || { DISTRO_NAME="AppleOS"; VERSION="0.3.0"; }
+source VERSION 2>/dev/null || { DISTRO_NAME="AppleOS"; VERSION="0.4.0"; }
 OUT="build/appleos-${VERSION}.iso"
 ISODIR="build/iso"
 INITRAMFS="build/initramfs.cpio.gz"

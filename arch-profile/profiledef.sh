@@ -6,7 +6,7 @@ iso_name="appleos"
 iso_label="APPLEOS_$(date --date="@${SOURCE_DATE_EPOCH:-$(date +%s)}" +%Y%m)"
 iso_publisher="AppleOS <https://example.invalid/appleos>"
 iso_application="AppleOS Live/Rescue (based on Arch Linux)"
-iso_version="0.3.0"
+iso_version="0.4.0"
 install_dir="appleos"
 buildmodes=('iso')
 bootmodes=('bios.syslinux'
@@ -30,4 +30,6 @@ file_permissions=(
   ["/usr/local/bin/appleos-wifi"]="0:0:755"
   ["/usr/local/bin/appleos-installer-chooser"]="0:0:755"
   ["/usr/local/bin/appleos-welcome"]="0:0:755"
+  ["/usr/local/bin/apple-shell-settings"]="0:0:755"
+  ["/usr/local/bin/appleos-update"]="0:0:755"
 )

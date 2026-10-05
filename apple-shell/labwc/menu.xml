@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Apple Shell :: right-click desktop menu (openbox format). -->
+<openbox_menu xmlns="http://openbox.org/3.4/menu">
+  <menu id="apple-menu" label="AppleOS">
+    <item label="Terminal" icon="utilities-terminal">
+      <action name="Execute"><command>foot</command></action>
+    </item>
+    <item label="Files" icon="system-file-manager">
+      <action name="Execute"><command>cosmic-files</command></action>
+    </item>
+    <item label="Browser" icon="web-browser">
+      <action name="Execute"><command>sh -c 'xdg-open about:blank || firefox || chromium'</command></action>
+    </item>
+    <separator />
+    <item label="Apple Shell Settings" icon="preferences-system">
+      <action name="Execute"><command>apple-shell-settings</command></action>
+    </item>
+    <separator />
+    <item label="Lock" icon="system-lock-screen">
+      <action name="Execute"><command>swaylock -f</command></action>
+    </item>
+    <item label="Log Out" icon="system-log-out">
+      <action name="Execute"><command>labwc --exit</command></action>
+    </item>
+    <item label="Reboot" icon="system-reboot">
+      <action name="Execute"><command>systemctl reboot</command></action>
+    </item>
+    <item label="Power Off" icon="system-shutdown">
+      <action name="Execute"><command>systemctl poweroff</command></action>
+    </item>
+  </menu>
+</openbox_menu>

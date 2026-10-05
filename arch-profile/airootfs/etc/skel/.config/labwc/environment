@@ -1,0 +1,9 @@
+# Apple Shell :: labwc environment (KEY=value lines).
+GTK_THEME=Adwaita-dark
+GTK_FONT_NAME=Inter 11
+GDK_BACKEND=wayland
+MOZ_ENABLE_WAYLAND=1
+QT_QPA_PLATFORM=wayland
+XDG_CURRENT_DESKTOP=labwc
+XDG_SESSION_TYPE=wayland
+_JAVA_AWT_WM_NONREPARENTING=1

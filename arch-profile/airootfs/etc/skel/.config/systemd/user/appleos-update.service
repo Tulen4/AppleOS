@@ -1,0 +1,6 @@
+[Unit]
+Description=Check AppleOS updates from GitHub
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/appleos-update --check

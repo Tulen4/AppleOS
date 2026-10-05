@@ -1,34 +1,55 @@
-EN
 # AppleOS
 
-Arch-based Linux distro with COSMIC desktop, Calamares GUI installer
-(online + offline modes), Wi-Fi from the live session, and driver autodetect.
-Built with [Muse Spark](https://opencode.ai) `muse-spark-1.3 free`.
+Arch-based distro: COSMIC by default + **Apple Shell** (macOS-style desktop
+on labwc: top menu bar, bottom dock, Spotlight). GUI installer with
+online/offline modes, auto updates from GitHub. EN/RU.
 
 ```bash
-./build.sh            # auto: native ISO on Arch, Docker ISO elsewhere, minimal otherwise
-./build.sh arch       # full live ISO with installer (Arch, sudo)
-./build.sh all        # minimal BusyBox ISO, rootless
-./scripts/run-qemu.sh # test the ISO in QEMU
+./build.sh   # auto: full ISO (native on Arch, Docker elsewhere, minimal fallback)
 ```
 
-EN docs live in the scripts (`build.sh`, `scripts/`). Sources: `arch-profile/` (live system),
-`rootfs-overlay/` (minimal init), `grub/`, `logo.png` + `fastfetch.txt` (branding).
+## Apple Shell — keybinds
+
+| Keys | Action |
+|---|---|
+| Super+Space / Super+D | Spotlight / app menu |
+| Super+T | Terminal (foot) |
+| Super+W | Browser |
+| Super+E | Files |
+| Super+I | Apple Shell settings |
+| Super+Q | Close window |
+| Super+F | Fullscreen |
+| Super+M | Minimize |
+| Super+arrows | Screen halves |
+| Super+1..4, Ctrl+Left/Right | Workspaces |
+| Super+Tab | Window switcher |
+| Super+L | Lock |
 
 ---
 
-RU
 # AppleOS
 
-Arch-based дистрибутив с COSMIC, GUI-установщиком Calamares
-(онлайн + офлайн режимы), Wi-Fi из live-сессии и автоустановкой драйверов.
+Arch-дистрибутив: COSMIC по умолчанию + **Apple Shell** (рабочий стол
+в духе macOS на labwc: верхняя панель, нижний док, Spotlight).
+GUI-установщик с онлайн/офлайн режимами, автообновления с GitHub. EN/RU.
 
 ```bash
-./build.sh            # авто: на Arch — полный ISO, на другом дистре — через Docker, иначе minimal
-./build.sh arch       # полный live ISO с установщиком (Arch, sudo)
-./build.sh all        # минимальный BusyBox ISO, без root
-./scripts/run-qemu.sh # тест ISO в QEMU
+./build.sh   # авто: полный ISO (на Arch нативно, в докере на другом дистре, иначе minimal)
 ```
 
-Исходники: `arch-profile/` (live-система), `rootfs-overlay/` (minimal init),
-`grub/`, `logo.png` + `fastfetch.txt` (брендинг).
+## Apple Shell — бинды
+
+| Кнопки | Действие |
+|---|---|
+| Super+Space / Super+D | Spotlight / меню приложений |
+| Super+T | Терминал (foot) |
+| Super+W | Браузер |
+| Super+E | Файлы |
+| Super+I | Настройки шелла |
+| Super+Q | Закрыть окно |
+| Super+F | Во весь экран |
+| Super+M | Свернуть |
+| Super+стрелки | Половины экрана |
+| Super+1..4, Ctrl+Left/Right | Столы |
+| Super+Tab | Переключатель окон |
+| Super+L | Блокировка |

@@ -94,4 +94,32 @@ if [ -f /etc/mkinitcpio.conf ] && ! grep -qE 'HOOKS=.*plymouth' /etc/mkinitcpio.
   echo "plymouth hook enabled"
 fi
 
+# 11. Apple Shell theming (only if labwc was chosen in the installer).
+# No other offered desktop pulls labwc, so its presence == user choice.
+# GTK default is Adwaita-dark (always present); WhiteSur is best-effort via
+# yay as nobody (yay refuses root), then applied to skel + created users.
+if pacman -Q labwc >/dev/null 2>&1; then
+  echo "apple-shell selected, theming"
+  GTK="Adwaita-dark"
+  if timeout 15 pacman -Sy >/dev/null 2>&1 && command -v yay >/dev/null 2>&1 && id nobody >/dev/null 2>&1; then
+    mkdir -p /tmp/yay-aur && chmod 777 /tmp/yay-aur
+    if HOME=/tmp/yay-aur sudo -u nobody yay -S --needed --noconfirm whitesur-gtk-theme whitesur-icon-theme >>"$LOG" 2>&1 \
+       && [ -d /usr/share/themes/WhiteSur-Dark ]; then
+      GTK="WhiteSur-Dark"
+    else
+      echo "WARN: WhiteSur failed, keeping Adwaita-dark"
+    fi
+    rm -rf /tmp/yay-aur
+  else
+    echo "WARN: no network/yay/nobody for WhiteSur, keeping Adwaita-dark"
+  fi
+  sed -i "s/^GTK_THEME=.*/GTK_THEME=$GTK/" /etc/skel/.config/labwc/environment
+  for u in $USERS; do
+    H="$(eval echo "~$u")"
+    [ -f "$H/.config/labwc/environment" ] \
+      && sed -i "s/^GTK_THEME=.*/GTK_THEME=$GTK/" "$H/.config/labwc/environment"
+  done
+  echo "gtk theme: $GTK"
+fi
+
 echo "=== appleos-finish done ==="

@@ -1,3 +1,6 @@
+@define-color accent #0a84ff;
+@define-color accent_soft rgba(10, 132, 255, 0.28);
+
 * {
   font-family: "Inter", "JetBrainsMono Nerd Font", sans-serif;
   font-size: 22px;
@@ -39,12 +42,13 @@ window#waybar {
 }
 
 #taskbar button {
+  transition: all 0.15s ease;
   padding: 2px 7px;
   border-radius: 10px;
 }
 
 #taskbar button.active {
-  background: rgba(0, 0, 0, 0.1);
+  background: @accent_soft;
 }
 
 #taskbar button.minimized {

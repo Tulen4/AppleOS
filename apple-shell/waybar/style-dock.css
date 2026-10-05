@@ -1,3 +1,6 @@
+@define-color accent #0a84ff;
+@define-color accent_soft rgba(10, 132, 255, 0.28);
+
 * {
   font-family: "Inter", "JetBrainsMono Nerd Font", sans-serif;
   font-size: 22px;
@@ -32,6 +35,14 @@ window#waybar {
   border-right: none;
 }
 
+#custom-finder:hover,
+#custom-terminal:hover,
+#custom-browser:hover,
+#custom-settings:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transition: all 0.15s ease;
+}
+
 #taskbar {
   border-radius: 0 16px 16px 0;
   padding: 6px 14px 6px 10px;
@@ -41,10 +52,15 @@ window#waybar {
 #taskbar button {
   padding: 2px 7px;
   border-radius: 10px;
+  transition: all 0.15s ease;
+}
+
+#taskbar button:hover {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 #taskbar button.active {
-  background: rgba(255, 255, 255, 0.16);
+  background: @accent_soft;
 }
 
 #taskbar button.minimized {

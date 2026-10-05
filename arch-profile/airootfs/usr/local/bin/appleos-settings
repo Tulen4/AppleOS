@@ -1,0 +1,180 @@
+#!/bin/bash
+# AppleOS Settings — control center: drivers, mirrors, kernels, cleanup,
+# gaming preset, updates. English/Russian (auto from $LANG).
+set -u
+
+ICON="/usr/share/pixmaps/appleos-logo.png"
+LOG="$HOME/.cache/appleos-settings.log"
+mkdir -p "$HOME/.cache"
+
+case "${LANG:-en}" in ru*) L=ru;; *) L=en;; esac
+
+if [ "$L" = ru ]; then
+  T_TITLE="Настройки AppleOS"
+  T_MAIN="Раздел:"
+  T_DRIVERS="Драйверы"; T_D_DRIVERS="Переустановить драйверы (как в EndeavourOS)"
+  T_MIRRORS="Зеркала"; T_D_MIRRORS="Выбрать быстрые зеркала (reflector)"
+  T_KERNELS="Ядра"; T_D_KERNELS="Поставить/убрать linux, linux-lts, linux-zen"
+  T_CLEAN="Очистка"; T_D_CLEAN="Кэш пакетов, сироты, журнал"
+  T_GAMING="Гейминг"; T_D_GAMING="Игровой пресет"
+  T_UPDATES="Обновления"; T_D_UPDATES="Обновить шелл и скрипты с GitHub"
+  T_ABOUT="О системе"; T_D_ABOUT="Версия AppleOS, ядро, железо"
+  T_PASS="Пароль sudo:"
+  T_PASS_FAIL="Неверный пароль. Еще раз?"
+  T_WORK="Работаю…"
+  T_DONE="Готово"
+  T_D_LOG="Подробности: %s"
+  T_Q_MIRRORS="Обновить список зеркал? Текущий сохранится в backup."
+  T_Q_CLEAN="Что чистить?"
+  T_C_CACHE="Кэш пакетов"; T_C_ORPH="Пакеты-сироты"; T_C_JOUR="Журнал (оставить 100M)"; T_C_TMP="Содержимое /tmp"
+  T_Q_KERNELS="Ядра (снятие галки = удалить; запущенное удалить нельзя):"
+  T_K_RUNNING="Ядро %s сейчас запущено — снять нельзя."
+  T_ABOUT_TEXT="AppleOS %s\nЯдро: %s\n%s"
+else
+  T_TITLE="AppleOS Settings"
+  T_MAIN="Section:"
+  T_DRIVERS="Drivers"; T_D_DRIVERS="Reinstall drivers (EndeavourOS-style)"
+  T_MIRRORS="Mirrors"; T_D_MIRRORS="Rank fast mirrors (reflector)"
+  T_KERNELS="Kernels"; T_D_KERNELS="Install/remove linux, linux-lts, linux-zen"
+  T_CLEAN="Cleanup"; T_D_CLEAN="Package cache, orphans, journal"
+  T_GAMING="Gaming"; T_D_GAMING="Gaming preset"
+  T_UPDATES="Updates"; T_D_UPDATES="Update shell and scripts from GitHub"
+  T_ABOUT="About"; T_D_ABOUT="AppleOS version, kernel, hardware"
+  T_PASS="Sudo password:"
+  T_PASS_FAIL="Wrong password. Retry?"
+  T_WORK="Working…"
+  T_DONE="Done"
+  T_D_LOG="Details: %s"
+  T_Q_MIRRORS="Refresh the mirrorlist? Current one is backed up."
+  T_Q_CLEAN="What to clean?"
+  T_C_CACHE="Package cache"; T_C_ORPH="Orphan packages"; T_C_JOUR="Journal (keep 100M)"; T_C_TMP="/tmp contents"
+  T_Q_KERNELS="Kernels (uncheck = remove; running one is protected):"
+  T_K_RUNNING="Kernel %s is running — cannot remove."
+  T_ABOUT_TEXT="AppleOS %s\nKernel: %s\n%s"
+fi
+
+need_sudo() {
+  local PASS=""
+  for _ in 1 2 3; do
+    PASS="$(zenity --entry --hide-text --window-icon="$ICON" --title="$T_TITLE" \
+      --text="$T_PASS" 2>/dev/null)" || return 1
+    printf '%s\n' "$PASS" | sudo -Sv >/dev/null 2>&1 && { echo "$PASS"; return 0; }
+    zenity --error --window-icon="$ICON" --text="$T_PASS_FAIL" 2>/dev/null || return 1
+  done
+  return 1
+}
+
+with_progress() { # $1=title ; rest=command... — runs with pulsating bar, shows log tail
+  local title="$1"; shift
+  "$@" >>"$LOG" 2>&1 &
+  local pid=$!
+  (while kill -0 $pid 2>/dev/null; do echo "# $T_WORK"; sleep 1; done) \
+    | zenity --progress --pulsate --auto-close --window-icon="$ICON" --title="$title" 2>/dev/null
+  wait $pid
+}
+
+sec_drivers() {
+  PASS="$(need_sudo)" || return 0
+  printf '%s\n' "$PASS" | sudo -Sv >/dev/null 2>&1
+  with_progress "$T_DRIVERS" sudo -n /usr/local/bin/appleos-drivers
+  # shellcheck disable=SC2059
+  zenity --info --window-icon="$ICON" --text="$T_DONE. $(printf "$T_D_LOG" "$LOG")" 2>/dev/null
+  PASS=""
+}
+
+sec_mirrors() {
+  zenity --question --window-icon="$ICON" --text="$T_Q_MIRRORS" 2>/dev/null || return 0
+  PASS="$(need_sudo)" || return 0
+  printf '%s\n' "$PASS" | sudo -Sv >/dev/null 2>&1
+  sudo -n cp /etc/pacman.d/mirrorlist "/etc/pacman.d/mirrorlist.bak-$(date +%F)" 2>/dev/null
+  with_progress "$T_MIRRORS" sudo -n reflector --latest 20 --sort rate --save /etc/pacman.d/mirrorlist
+  # shellcheck disable=SC2059
+  zenity --info --window-icon="$ICON" --text="$T_DONE. $(printf "$T_D_LOG" "$LOG")" 2>/dev/null
+  PASS=""
+}
+
+sec_kernels() {
+  ROWS=()
+  for k in linux linux-lts linux-zen; do
+    if pacman -Q "$k" >/dev/null 2>&1; then ROWS+=(TRUE "$k"); else ROWS+=(FALSE "$k"); fi
+  done
+  WANT="$(zenity --list --checklist --print-column=2 --separator=" " \
+    --window-icon="$ICON" --title="$T_KERNELS" --text="$T_Q_KERNELS" --width=420 \
+    --column="" --column="x" "${ROWS[@]}" 2>/dev/null)" || return 0
+  RUNNING="$(pacman -Qoq /boot/vmlinuz-linux 2>/dev/null || echo linux)"
+  for k in linux linux-lts linux-zen; do
+    if echo " $WANT " | grep -q " $k "; then
+      pacman -Q "$k" >/dev/null 2>&1 || TO_INSTALL="$TO_INSTALL $k"
+    else
+      if pacman -Q "$k" >/dev/null 2>&1; then
+        # shellcheck disable=SC2059
+        [ "$k" = "$RUNNING" ] && { zenity --error --window-icon="$ICON" --text="$(printf "$T_K_RUNNING" "$k")" 2>/dev/null; continue; }
+        TO_REMOVE="$TO_REMOVE $k"
+      fi
+    fi
+  done
+  [ -z "${TO_INSTALL:-}${TO_REMOVE:-}" ] && return 0
+  PASS="$(need_sudo)" || return 0
+  printf '%s\n' "$PASS" | sudo -Sv >/dev/null 2>&1
+  # shellcheck disable=SC2086
+  [ -n "${TO_INSTALL:-}" ] && with_progress "$T_KERNELS" sudo -n pacman -S --needed --noconfirm $TO_INSTALL
+  # shellcheck disable=SC2086
+  [ -n "${TO_REMOVE:-}" ] && with_progress "$T_KERNELS" sudo -n pacman -Rns --noconfirm $TO_REMOVE
+  [ -f /boot/grub/grub.cfg ] && with_progress "$T_KERNELS" sudo -n grub-mkconfig -o /boot/grub/grub.cfg
+  # shellcheck disable=SC2059
+  zenity --info --window-icon="$ICON" --text="$T_DONE. $(printf "$T_D_LOG" "$LOG")" 2>/dev/null
+  PASS=""
+}
+
+sec_cleanup() {
+  PICK="$(zenity --list --checklist --print-column=2 --separator=" " \
+    --window-icon="$ICON" --title="$T_CLEAN" --text="$T_Q_CLEAN" --width=420 \
+    --column="" --column="x" \
+    TRUE cache "$T_C_CACHE" FALSE orphans "$T_C_ORPH" \
+    FALSE journal "$T_C_JOUR" FALSE tmp "$T_C_TMP" 2>/dev/null)" || return 0
+  [ -n "$PICK" ] || return 0
+  PASS="$(need_sudo)" || return 0
+  printf '%s\n' "$PASS" | sudo -Sv >/dev/null 2>&1
+  echo " $PICK " | grep -q " cache " && with_progress "$T_CLEAN" sudo -n pacman -Sc --noconfirm
+  if echo " $PICK " | grep -q " orphans "; then
+    ORPH="$(pacman -Qtdq 2>/dev/null || true)"
+    # shellcheck disable=SC2086
+    [ -n "$ORPH" ] && with_progress "$T_CLEAN" sudo -n pacman -Rns --noconfirm $ORPH
+  fi
+  echo " $PICK " | grep -q " journal " && with_progress "$T_CLEAN" sudo -n journalctl --vacuum-size=100M
+  echo " $PICK " | grep -q " tmp " && with_progress "$T_CLEAN" sudo -n sh -c 'rm -rf /tmp/* /tmp/.* 2>/dev/null; true'
+  # shellcheck disable=SC2059
+  zenity --info --window-icon="$ICON" --text="$T_DONE. $(printf "$T_D_LOG" "$LOG")" 2>/dev/null
+  PASS=""
+}
+
+sec_about() {
+  VER="$(grep '^VERSION=' /usr/share/apple-shell/VERSION 2>/dev/null | cut -d'"' -f2)"
+  [ -z "$VER" ] && VER="?"
+  HW="$(grep -m1 "model name" /proc/cpuinfo | cut -d: -f2 | xargs) / $(free -h | awk '/Mem:/{print $2}') RAM"
+  # shellcheck disable=SC2059
+  zenity --info --window-icon="$ICON" --title="$T_ABOUT" \
+    --text="$(printf "$T_ABOUT_TEXT" "$VER" "$(uname -r)" "$HW")" --width=440 2>/dev/null
+}
+
+while true; do
+  SEC="$(zenity --list --radiolist --window-icon="$ICON" --print-column=2 \
+    --title="$T_TITLE" --text="$T_MAIN" --width=520 --height=380 \
+    --column="" --column="x" --column="d" \
+    TRUE "$T_DRIVERS" "$T_D_DRIVERS" \
+    FALSE "$T_MIRRORS" "$T_D_MIRRORS" \
+    FALSE "$T_KERNELS" "$T_D_KERNELS" \
+    FALSE "$T_CLEAN" "$T_D_CLEAN" \
+    FALSE "$T_GAMING" "$T_D_GAMING" \
+    FALSE "$T_UPDATES" "$T_D_UPDATES" \
+    FALSE "$T_ABOUT" "$T_D_ABOUT" 2>/dev/null)" || exit 0
+  case "$SEC" in
+    "$T_DRIVERS") sec_drivers ;;
+    "$T_MIRRORS") sec_mirrors ;;
+    "$T_KERNELS") sec_kernels ;;
+    "$T_CLEAN") sec_cleanup ;;
+    "$T_GAMING") exec /usr/local/bin/appleos-gaming ;;
+    "$T_UPDATES") exec /usr/local/bin/appleos-update ;;
+    *) sec_about ;;
+  esac
+done

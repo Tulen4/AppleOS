@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=AppleOS Settings
+Name[ru]=Настройки AppleOS
+Comment=Drivers, mirrors, kernels, cleanup, gaming, updates
+Comment[ru]=Драйверы, зеркала, ядра, очистка, гейминг, обновления
+Exec=/usr/local/bin/appleos-settings
+Icon=/usr/share/pixmaps/appleos-logo.png
+Terminal=false
+Categories=System;Settings;

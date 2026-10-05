@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=AppleOS Gaming
+Name[ru]=AppleOS Гейминг
+Comment=One-click gaming preset: Steam, GameMode, MangoHud, Proton-GE
+Comment[ru]=Гейминг в один клик: Steam, GameMode, MangoHud, Proton-GE
+Exec=/usr/local/bin/appleos-gaming
+Icon=/usr/share/pixmaps/appleos-logo.png
+Terminal=false
+Categories=Game;System;

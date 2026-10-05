@@ -1,96 +1,201 @@
 #!/bin/bash
-# Apple Shell Settings — GUI tweaks for the AppleOS desktop:
-# wallpaper, dark/light theme, dock icon size, keybindings cheat sheet.
-# English/Russian (auto from $LANG). Zenity required.
+# Apple Shell Settings — themes, accents, wallpaper, effects, dock,
+# keybindings, experimental SwayFX. English/Russian (auto from $LANG).
 set -u
 
 ICON="/usr/share/pixmaps/appleos-logo.png"
 CFG="$HOME/.config"
 SHARE="/usr/share/apple-shell"
+STATE="$CFG/apple-shell"
+mkdir -p "$STATE"
 
 case "${LANG:-en}" in ru*) L=ru;; *) L=en;; esac
 
+THEME="$(cat "$STATE/theme" 2>/dev/null || echo dark)"
+ACCENT="$(cat "$STATE/accent" 2>/dev/null || echo blue)"
+
 if [ "$L" = ru ]; then
   T_TITLE="Настройки Apple Shell"
-  T_MAIN="Что настроить?"
-  T_WALL="Обои…"; T_THEME="Тёмная / светлая тема"; T_DOCK="Размер иконок дока"
-  T_KEYS="Горячие клавиши"; T_ABOUT="Об Apple Shell"
-  T_DARK="Тёмная"; T_LIGHT="Светлая"
-  T_THEME_NOTE="Тема GTK применится для новых окон. Панели переключаются сразу."
-  T_DOCK_S="Мелкие"; T_DOCK_M="Средние"; T_DOCK_L="Крупные"
-  T_ABOUT_TEXT="Apple Shell — оригинальный рабочий стол AppleOS на labwc.\nВерхняя меню-панель, нижний док, Spotlight (Super+Space).\nНикаких ассетов Apple: все иконки и обои нарисованы проектом."
-  T_KEYS_TEXT="Super+Space — Spotlight   Super+D — меню приложений\nSuper+T / Super+Enter — терминал   Super+W — браузер\nSuper+E — файлы   Super+I / Super+, — эти настройки\nSuper+Q — закрыть   Super+M / Super+Down — свернуть\nSuper+F — во весь экран   Super+Shift+F — развернуть\nSuper+Left/Right — половины экрана   Super+1..4 — столы\nCtrl+Left/Right — соседний стол   Super+Tab — окна\nSuper+Shift+D — показать стол   Super+L — заблокировать\nSuper+Shift+3/4 — скриншот"
-  T_WALL_TITLE="Выбери обои"
+  T_MAIN="Что настроить? (тема: %s, акцент: %s)"
+  T_THEME="Тема…"; T_ACCENT="Акцент…"; T_WALL="Обои…"; T_FX="Эффекты…"
+  T_DOCK="Размер дока"; T_KEYS="Горячие клавиши"; T_SWAY="Попробовать SwayFX"; T_ABOUT="Об Apple Shell"
+  T_DARK="Тёмная"; T_LIGHT="Светлая"; T_MID="Полночь (OLED)"
+  T_FX_FULL="Полные (тени)"; T_FX_FAST="Быстрые (без теней)"
+  T_ACC_NAMES="Синий Фиолет Зелень Оранж Розовый"
+  T_WALL_BUNDLED="Встроенные"; T_WALL_CUSTOM="Свои…"
+  T_SWAY_T="SwayFX — эксперимент"
+  T_SWAY_D="Поставит swayfx из AUR и положит конфиг. Вход — выбором сессии на экране входа. Продолжить?"
+  T_SWAY_NEED="Нужны интернет и yay."
+  T_SWAY_OK="Готово. Разлогинься и выбери сессию SwayFX на экране входа."
+  T_SWAY_FAIL="Не поставилось. Лог смотри в терминале: yay -S swayfx"
+  T_KEYS_T="Горячие клавиши"
+  T_KEYS_TEXT="Super+Space / Super+D — Spotlight / меню\nSuper+T — терминал   Super+W — браузер   Super+E — файлы\nSuper+I — эти настройки   Super+Q — закрыть\nSuper+F — во весь экран   Super+M — свернуть\nSuper+стрелки — половины   Super+1..4 — столы\nCtrl+Left/Right — соседний стол   Super+Tab — окна\nSuper+L — блокировка   Super+Shift+3/4 — скриншот"
+  T_ABOUT_T="Об Apple Shell"
+  T_ABOUT_TEXT="Оригинальный стол AppleOS на labwc: меню-панель, док, Spotlight.\nБез ассетов Apple. labwc перечитывает тему на лету."
   T_DONE="Применено"
 else
   T_TITLE="Apple Shell Settings"
-  T_MAIN="What to tweak?"
-  T_WALL="Wallpaper…"; T_THEME="Dark / light theme"; T_DOCK="Dock icon size"
-  T_KEYS="Keybindings"; T_ABOUT="About Apple Shell"
-  T_DARK="Dark"; T_LIGHT="Light"
-  T_THEME_NOTE="GTK theme applies to new windows. Bars switch instantly."
-  T_DOCK_S="Small"; T_DOCK_M="Medium"; T_DOCK_L="Large"
-  T_ABOUT_TEXT="Apple Shell — the original AppleOS desktop on labwc.\nTop menu bar, bottom dock, Spotlight (Super+Space).\nNo Apple assets: all artwork is drawn by the project."
-  T_KEYS_TEXT="Super+Space — Spotlight   Super+D — app menu\nSuper+T / Super+Enter — terminal   Super+W — browser\nSuper+E — files   Super+I / Super+, — these settings\nSuper+Q — close   Super+M / Super+Down — minimize\nSuper+F — fullscreen   Super+Shift+F — maximize\nSuper+Left/Right — screen halves   Super+1..4 — workspaces\nCtrl+Left/Right — neighbor workspace   Super+Tab — windows\nSuper+Shift+D — show desktop   Super+L — lock\nSuper+Shift+3/4 — screenshot"
-  T_WALL_TITLE="Pick a wallpaper"
+  T_MAIN="What to tweak? (theme: %s, accent: %s)"
+  T_THEME="Theme…"; T_ACCENT="Accent…"; T_WALL="Wallpaper…"; T_FX="Effects…"
+  T_DOCK="Dock size"; T_KEYS="Keybindings"; T_SWAY="Try SwayFX"; T_ABOUT="About Apple Shell"
+  T_DARK="Dark"; T_LIGHT="Light"; T_MID="Midnight (OLED)"
+  T_FX_FULL="Full (shadows)"; T_FX_FAST="Fast (no shadows)"
+  T_ACC_NAMES="Blue Purple Green Orange Pink"
+  T_WALL_BUNDLED="Bundled"; T_WALL_CUSTOM="Custom…"
+  T_SWAY_T="SwayFX — experimental"
+  T_SWAY_D="Installs swayfx from AUR and drops a config. Log in via the SwayFX session. Continue?"
+  T_SWAY_NEED="Needs internet and yay."
+  T_SWAY_OK="Done. Log out and pick the SwayFX session at login."
+  T_SWAY_FAIL="Install failed. Terminal log: yay -S swayfx"
+  T_KEYS_T="Keybindings"
+  T_KEYS_TEXT="Super+Space / Super+D — Spotlight / menu\nSuper+T — terminal   Super+W — browser   Super+E — files\nSuper+I — these settings   Super+Q — close\nSuper+F — fullscreen   Super+M — minimize\nSuper+arrows — halves   Super+1..4 — workspaces\nCtrl+Left/Right — neighbor space   Super+Tab — windows\nSuper+L — lock   Super+Shift+3/4 — screenshot"
+  T_ABOUT_T="About Apple Shell"
+  T_ABOUT_TEXT="The original AppleOS desktop on labwc: menu bar, dock, Spotlight.\nNo Apple assets. labwc re-reads themes live."
   T_DONE="Applied"
 fi
 
+ACCENT_CSS() { # $1=name -> "solid|soft|fuzzel|mako"
+  case "$1" in
+    purple) echo "#a259ff|rgba(162, 89, 255, 0.28)|a259ffff|#a259ff" ;;
+    green)  echo "#30d158|rgba(48, 209, 88, 0.28)|30d158ff|#30d158" ;;
+    orange) echo "#ff9f0a|rgba(255, 159, 10, 0.28)|ff9f0aff|#ff9f0a" ;;
+    pink)   echo "#ff375f|rgba(255, 55, 95, 0.28)|ff375fff|#ff375f" ;;
+    *)      echo "#0a84ff|rgba(10, 132, 255, 0.28)|0a84ffff|#0a84ff" ;;
+  esac
+}
+
+reload_ui() {
+  pkill -SIGUSR2 waybar 2>/dev/null
+  makoctl reload 2>/dev/null
+  labwc --reconfigure 2>/dev/null || labwc -r 2>/dev/null || true
+}
+
+pick_theme() {
+  M="$(zenity --list --radiolist --window-icon="$ICON" --print-column=2 \
+    --title="$T_THEME" --text="$T_THEME" \
+    --column="" --column="x" \
+    FALSE "$T_DARK" FALSE "$T_LIGHT" FALSE "$T_MID" 2>/dev/null)" || return 0
+  case "$M" in
+    "$T_LIGHT") THEME=light; GTK_D="WhiteSur-Light"; GTK_F="Adwaita" ;;
+    "$T_MID")   THEME=midnight; GTK_D="WhiteSur-Dark"; GTK_F="Adwaita-dark" ;;
+    *)          THEME=dark; GTK_D="WhiteSur-Dark"; GTK_F="Adwaita-dark" ;;
+  esac
+  echo "$THEME" > "$STATE/theme"
+  cp "$SHARE/waybar/style-top-$THEME.css" "$CFG/waybar/style.css"
+  cp "$SHARE/waybar/style-dock-$THEME.css" "$CFG/waybar/style-dock.css"
+  cp "$SHARE/labwc/themerc-$THEME" "$CFG/labwc/themerc-override"
+  if [ "$THEME" = light ] && [ -f "$SHARE/mako/config-light" ]; then
+    cp "$SHARE/mako/config-light" "$CFG/mako/config"
+  else
+    cp "$SHARE/mako/config" "$CFG/mako/config" 2>/dev/null || true
+  fi
+  GTK="$GTK_D"; [ -d "/usr/share/themes/$GTK_D" ] || GTK="$GTK_F"
+  sed -i "s/^GTK_THEME=.*/GTK_THEME=$GTK/" "$CFG/labwc/environment" 2>/dev/null \
+    || echo "GTK_THEME=$GTK" >> "$CFG/labwc/environment"
+  apply_accent "$ACCENT"
+  reload_ui
+  zenity --info --window-icon="$ICON" --text="$T_DONE" 2>/dev/null
+}
+
+apply_accent() { # $1=name
+  ACCENT="$1"; echo "$ACCENT" > "$STATE/accent"
+  C="$(ACCENT_CSS "$ACCENT")"
+  SOLID="${C%%|*}"; REST="${C#*|}"; SOFT="${REST%%|*}"; REST="${REST#*|}"
+  FUZZ="${REST%%|*}"; MAKO="${REST##*|}"
+  sed -i "s/^@define-color accent .*/@define-color accent $SOLID;/;s/^@define-color accent_soft .*/@define-color accent_soft $SOFT;/" \
+    "$CFG/waybar/style.css" "$CFG/waybar/style-dock.css" 2>/dev/null
+  sed -i "s/^selection=.*/selection=$FUZZ/" "$CFG/fuzzel/fuzzel.ini" 2>/dev/null
+  sed -i "s/^border-color=.*/border-color=$MAKO/" "$CFG/mako/config" 2>/dev/null
+}
+
+pick_accent() {
+  # shellcheck disable=SC2086
+  A="$(zenity --list --radiolist --window-icon="$ICON" --print-column=2 \
+    --title="$T_ACCENT" --text="$T_ACCENT" \
+    --column="" --column="x" \
+    FALSE ${T_ACC_NAMES} 2>/dev/null)" || return 0
+  # map localized name back to key by position
+  i=1; for _n in $T_ACC_NAMES; do
+    [ "$_n" = "$A" ] && break
+    i=$((i + 1))
+  done
+  key="$(echo "blue purple green orange pink" | cut -d' ' -f"$i")"
+  apply_accent "$key"
+  reload_ui
+  zenity --info --window-icon="$ICON" --text="$T_DONE" 2>/dev/null
+}
+
 pick_wallpaper() {
-  W="$(zenity --file-selection --window-icon="$ICON" --title="$T_WALL_TITLE" \
-    --file-filter="Images | *.png *.jpg *.jpeg *.webp" 2>/dev/null)" || return 0
-  [ -f "$W" ] || return 0
-  mkdir -p "$CFG/apple-shell"
-  echo "$W" > "$CFG/apple-shell/wallpaper"
+  W="$(zenity --list --radiolist --window-icon="$ICON" --print-column=2 \
+    --title="$T_WALL" --text="$T_WALL_BUNDLED" \
+    --column="" --column="x" \
+    TRUE wallpaper.png FALSE wallpaper-midnight.png FALSE wallpaper-sunset.png \
+    FALSE "$T_WALL_CUSTOM" 2>/dev/null)" || return 0
+  if [ "$W" = "$T_WALL_CUSTOM" ]; then
+    W="$(zenity --file-selection --window-icon="$ICON" --title="$T_WALL" \
+      --file-filter="Images | *.png *.jpg *.jpeg *.webp" 2>/dev/null)" || return 0
+    [ -f "$W" ] || return 0
+  else
+    W="$SHARE/$W"
+  fi
+  mkdir -p "$STATE"
+  echo "$W" > "$STATE/wallpaper"
   pkill swaybg 2>/dev/null
   swaybg -i "$W" -m fill &
   zenity --info --window-icon="$ICON" --text="$T_DONE" 2>/dev/null
 }
 
-pick_theme() {
+pick_effects() {
   M="$(zenity --list --radiolist --window-icon="$ICON" --print-column=2 \
-    --title="$T_THEME" --text="$T_THEME_NOTE" \
-    --column="" --column="x" TRUE "$T_DARK" FALSE "$T_LIGHT" 2>/dev/null)" || return 0
-  mkdir -p "$CFG/labwc" "$CFG/waybar"
-  if [ "$M" = "$T_LIGHT" ]; then
-    GTK="WhiteSur-Light"; [ -d /usr/share/themes/WhiteSur-Light ] || GTK="Adwaita"
-    cp "$CFG/waybar/style-top-light.css" "$CFG/waybar/style.css" 2>/dev/null || cp "$SHARE/waybar/style-top-light.css" "$CFG/waybar/style.css"
-    cp "$CFG/waybar/style-dock-light.css" "$CFG/waybar/style-dock.css" 2>/dev/null || cp "$SHARE/waybar/style-dock-light.css" "$CFG/waybar/style-dock.css"
+    --title="$T_FX" --text="$T_FX" \
+    --column="" --column="x" \
+    TRUE "$T_FX_FULL" FALSE "$T_FX_FAST" 2>/dev/null)" || return 0
+  if [ "$M" = "$T_FX_FAST" ]; then
+    sed -i -E 's/^(window\.(active|inactive)\.shadow\.size: ).*/\10/' "$CFG/labwc/themerc-override" 2>/dev/null
   else
-    GTK="WhiteSur-Dark"; [ -d /usr/share/themes/WhiteSur-Dark ] || GTK="Adwaita-dark"
-    cp "$CFG/waybar/style-top-dark.css" "$CFG/waybar/style.css" 2>/dev/null || cp "$SHARE/waybar/style-top-dark.css" "$CFG/waybar/style.css"
-    cp "$CFG/waybar/style-dock-dark.css" "$CFG/waybar/style-dock.css" 2>/dev/null || cp "$SHARE/waybar/style-dock-dark.css" "$CFG/waybar/style-dock.css"
+    cp "$SHARE/labwc/themerc-$THEME" "$CFG/labwc/themerc-override" 2>/dev/null
   fi
-  sed -i "s/^GTK_THEME=.*/GTK_THEME=$GTK/" "$CFG/labwc/environment" 2>/dev/null \
-    || echo "GTK_THEME=$GTK" >> "$CFG/labwc/environment"
-  pkill -SIGUSR2 waybar 2>/dev/null
+  labwc --reconfigure 2>/dev/null || labwc -r 2>/dev/null || true
   zenity --info --window-icon="$ICON" --text="$T_DONE" 2>/dev/null
 }
 
 pick_dock() {
   S="$(zenity --list --radiolist --window-icon="$ICON" --print-column=2 \
     --title="$T_DOCK" --text="$T_DOCK" \
-    --column="" --column="x" FALSE "$T_DOCK_S" TRUE "$T_DOCK_M" FALSE "$T_DOCK_L" 2>/dev/null)" || return 0
-  case "$S" in
-    "$T_DOCK_S") SZ=24 ;;
-    "$T_DOCK_L") SZ=36 ;;
-    *) SZ=30 ;;
-  esac
-  sed -i "s/\"icon-size\": [0-9]*/\"icon-size\": $SZ/" "$CFG/waybar/config-dock.json" 2>/dev/null
+    --column="" --column="x" \
+    FALSE 24 FALSE 30 FALSE 36 2>/dev/null)" || return 0
+  sed -i "s/\"icon-size\": [0-9]*/\"icon-size\": $S/" "$CFG/waybar/config-dock.json" 2>/dev/null
   pkill -SIGUSR2 waybar 2>/dev/null
   zenity --info --window-icon="$ICON" --text="$T_DONE" 2>/dev/null
 }
 
+try_swayfx() {
+  zenity --question --window-icon="$ICON" --title="$T_SWAY_T" --text="$T_SWAY_D" --width=480 2>/dev/null || return 0
+  command -v yay >/dev/null 2>&1 || { zenity --error --window-icon="$ICON" --text="$T_SWAY_NEED" 2>/dev/null; return 0; }
+  if yay -S --needed --noconfirm swayfx 2>/dev/null; then
+    mkdir -p "$CFG/sway"
+    cp "$SHARE/swayfx/config" "$CFG/sway/config"
+    zenity --info --window-icon="$ICON" --text="$T_SWAY_OK" --width=480 2>/dev/null
+  else
+    zenity --error --window-icon="$ICON" --text="$T_SWAY_FAIL" 2>/dev/null
+  fi
+}
+
 while true; do
+  # shellcheck disable=SC2059
   ACT="$(zenity --list --radiolist --window-icon="$ICON" --print-column=2 \
-    --title="$T_TITLE" --text="$T_MAIN" \
+    --title="$T_TITLE" --text="$(printf "$T_MAIN" "$THEME" "$ACCENT")" \
     --column="" --column="x" \
-    TRUE "$T_WALL" FALSE "$T_THEME" FALSE "$T_DOCK" FALSE "$T_KEYS" FALSE "$T_ABOUT" 2>/dev/null)" || exit 0
+    TRUE "$T_WALL" FALSE "$T_THEME" FALSE "$T_ACCENT" FALSE "$T_FX" \
+    FALSE "$T_DOCK" FALSE "$T_KEYS" FALSE "$T_SWAY" FALSE "$T_ABOUT" 2>/dev/null)" || exit 0
   case "$ACT" in
     "$T_WALL") pick_wallpaper ;;
     "$T_THEME") pick_theme ;;
+    "$T_ACCENT") pick_accent ;;
+    "$T_FX") pick_effects ;;
     "$T_DOCK") pick_dock ;;
     "$T_KEYS") zenity --info --window-icon="$ICON" --title="$T_KEYS" --text="$T_KEYS_TEXT" --width=520 2>/dev/null ;;
+    "$T_SWAY") try_swayfx ;;
     *) zenity --info --window-icon="$ICON" --title="$T_ABOUT" --text="$T_ABOUT_TEXT" --width=480 2>/dev/null ;;
   esac
 done

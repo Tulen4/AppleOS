@@ -1,0 +1,11 @@
+font=Inter:size=11
+background-color=#f2f2f7ee
+text-color=#1a1a1e
+border-color=#c8c8d0
+border-size=1
+border-radius=12
+default-timeout=5000
+anchor=top-right
+margin=12
+padding=14
+width=360

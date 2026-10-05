@@ -4,12 +4,12 @@
 * {
   font-family: "Inter", "JetBrainsMono Nerd Font", sans-serif;
   font-size: 13px;
-  color: #1a1a1e;
+  color: white;
 }
 
 window#waybar {
-  background: rgba(242, 242, 247, 0.78);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.85);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 #custom-apple {
@@ -18,24 +18,25 @@ window#waybar {
 }
 
 #workspaces button {
-  transition: all 0.2s ease;
   padding: 0 9px;
-  color: #999999;
+  color: #888888;
   background: transparent;
   border-radius: 8px;
-}
-
-#workspaces button.active {
-  color: #1a1a1e;
-  background: @accent_soft;
+  transition: all 0.2s ease;
 }
 
 #workspaces button:hover {
-  background: rgba(0, 0, 0, 0.05);
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+#workspaces button.active {
+  color: white;
+  background: @accent_soft;
 }
 
 #workspaces button.empty {
-  color: #bbbbbb;
+  color: #555555;
 }
 
 #tray,

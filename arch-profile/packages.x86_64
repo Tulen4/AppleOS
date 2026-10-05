@@ -170,3 +170,6 @@ brightnessctl
 pamixer
 pavucontrol
 nm-connection-editor
+zram-generator
+earlyoom
+capitaine-cursors

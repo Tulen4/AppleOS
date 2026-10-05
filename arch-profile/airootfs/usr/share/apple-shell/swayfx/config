@@ -1,0 +1,77 @@
+# Apple Shell on swayfx (experimental eye-candy path).
+# Same macOS keybinds as labwc. Plain sway-compatible base; uncomment the
+# EFFECTS block for rounded corners / shadows / blur (costs GPU on VMs).
+set $mod Mod4
+set $term foot
+set $menu fuzzel
+
+font pango:Inter 11
+default_border pixel 2
+default_floating_border pixel 2
+hide_edge_borders smart
+
+# no gaps: macOS-like tiling fill
+gaps inner 0
+gaps outer 0
+
+# wallpaper (sway native, no swaybg needed)
+output * bg /usr/share/apple-shell/wallpaper.png fill
+
+# --- bars: our waybar instances (top menu + bottom dock) ---
+# started from autostart below (same stack as labwc)
+
+# --- autostart ---
+exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP
+exec waybar -c ~/.config/waybar/config-top.json -s ~/.config/waybar/style.css
+exec waybar -c ~/.config/waybar/config-dock.json -s ~/.config/waybar/style-dock.css
+exec mako
+exec /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1
+exec nm-applet --indicator
+exec wl-paste --type text --watch cliphist store
+exec wl-paste --type image --watch cliphist store
+exec swayidle -w timeout 600 'swaylock -f'
+
+# keybinds (mirror of labwc rc.xml)
+bindsym $mod+space exec fuzzel
+bindsym $mod+d exec fuzzel
+bindsym $mod+Return exec $term
+bindsym $mod+t exec $term
+bindsym $mod+w exec sh -c 'firefox || chromium || xdg-open about:blank'
+bindsym $mod+e exec sh -c 'cosmic-files || thunar'
+bindsym $mod+i exec apple-shell-settings
+bindsym $mod+q kill
+bindsym $mod+m move scratchpad
+bindsym $mod+Shift+m scratchpad show
+bindsym $mod+f fullscreen toggle
+bindsym $mod+Shift+f floating toggle
+bindsym $mod+Left focus left
+bindsym $mod+Right focus right
+bindsym $mod+Up focus up
+bindsym $mod+Down focus down
+bindsym $mod+1 workspace number 1
+bindsym $mod+2 workspace number 2
+bindsym $mod+3 workspace number 3
+bindsym $mod+4 workspace number 4
+bindsym $mod+Shift+1 move container to workspace number 1
+bindsym $mod+Shift+2 move container to workspace number 2
+bindsym $mod+Shift+3 move container to workspace number 3
+bindsym $mod+Shift+4 move container to workspace number 4
+bindsym Ctrl+Left workspace prev
+bindsym Ctrl+Right workspace next
+bindsym $mod+Tab workspace back_and_forth
+bindsym $mod+l exec swaylock -f
+bindsym $mod+Shift+3 exec sh -c 'grim ~/Pictures/shot-$(date +%F-%H%M%S).png'
+bindsym $mod+Shift+4 exec sh -c 'grim -g "$(slurp)" ~/Pictures/shot-$(date +%F-%H%M%S).png'
+bindsym $mod+comma exec apple-shell-settings
+bindsym $mod+Shift+q exec swaymsg exit
+bindsym $mod+Shift+r reload
+
+# --- EFFECTS (swayfx only, uncomment for eye candy) ---
+# corner_radius 12
+# smart_corner_radius enable
+# shadows enable
+# shadow_blur_radius 20
+# shadow_color #00000080
+# layer_effects "waybar" blur enable
+# blur enable
+# blur_xray disable

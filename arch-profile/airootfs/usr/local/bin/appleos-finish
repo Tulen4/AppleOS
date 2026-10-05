@@ -17,8 +17,9 @@ rm -f /usr/lib/sysusers.d/appleos-live.conf /usr/lib/tmpfiles.d/appleos-live.con
 rm -f /etc/systemd/system/appleos-live.service \
       /etc/systemd/system/multi-user.target.wants/appleos-live.service
 
-# 2. Target services: NetworkManager networking, graphical login
-systemctl enable NetworkManager sddm 2>/dev/null || true
+# 2. Target services: NetworkManager networking, graphical login, early OOM guard
+# (zram needs no enable: the generator picks up its config automatically)
+systemctl enable NetworkManager sddm earlyoom 2>/dev/null || true
 systemctl set-default graphical.target 2>/dev/null || true
 
 # 3. Real users (uid>=1000, except liveuser)

@@ -16,8 +16,8 @@ window#waybar {
 #custom-browser,
 #custom-settings,
 #taskbar {
-  background: rgba(28, 28, 34, 0.78);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(5, 5, 8, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.14);
 }
 
 #custom-finder {
@@ -39,7 +39,7 @@ window#waybar {
 #custom-terminal:hover,
 #custom-browser:hover,
 #custom-settings:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.14);
   transition: all 0.15s ease;
 }
 
@@ -56,7 +56,7 @@ window#waybar {
 }
 
 #taskbar button:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 #taskbar button.active {

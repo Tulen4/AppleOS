@@ -1,0 +1,112 @@
+#!/bin/bash
+# AppleOS Gaming — one-click gaming preset: Steam, Lutris, Wine, Heroic,
+# GameMode, MangoHud (+32-bit), Proton-GE, Discord.
+# English/Russian (auto from $LANG). Multilib auto-enabled when needed.
+set -u
+
+ICON="/usr/share/pixmaps/appleos-logo.png"
+LOG="$HOME/.cache/appleos-gaming.log"
+mkdir -p "$HOME/.cache"
+
+case "${LANG:-en}" in ru*) L=ru;; *) L=en;; esac
+
+if [ "$L" = ru ]; then
+  T_TITLE="AppleOS — Гейминг"
+  T_TEXT="Игровой пресет в один клик. Нужен интернет; под Steam/Wine сам включит multilib."
+  T_PASS="Пароль sudo:"
+  T_PASS_FAIL="Неверный пароль. Еще раз?"
+  T_INSTALLING="Ставлю игры и тулзы"
+  T_DONE_OK="Готово! Установлено: %s."
+  T_DONE_FAIL="Готово. Не поставилось:%s\nЛог: %s"
+  T_NORUN="Ничего не выбрано."
+else
+  T_TITLE="AppleOS — Gaming"
+  T_TEXT="One-click gaming preset. Needs internet; enables multilib for Steam/Wine itself."
+  T_PASS="Sudo password:"
+  T_PASS_FAIL="Wrong password. Retry?"
+  T_INSTALLING="Installing games and tools"
+  T_DONE_OK="Done! Installed: %s."
+  T_DONE_FAIL="Done. Failed:%s\nLog: %s"
+  T_NORUN="Nothing selected."
+fi
+
+PASS=""
+for _ in 1 2 3; do
+  PASS="$(zenity --entry --hide-text --window-icon="$ICON" --title="$T_TITLE" \
+    --text="$T_PASS" 2>/dev/null)" || exit 0
+  printf '%s\n' "$PASS" | sudo -Sv >/dev/null 2>&1 && break
+  PASS=""
+  zenity --error --window-icon="$ICON" --text="$T_PASS_FAIL" 2>/dev/null || exit 0
+done
+[ -n "$PASS" ] || exit 0
+sudo_keep() { printf '%s\n' "$PASS" | sudo -Sv >/dev/null 2>&1; }
+
+SEL="$(zenity --list --checklist --print-column=2 --separator=" " \
+  --window-icon="$ICON" --title="$T_TITLE" --text="$T_TEXT" --width=620 --height=420 \
+  --column="" --column="id" --hide-column=2 --column="App" --column="Description" \
+  TRUE steam "Steam" "Game store + Proton" \
+  FALSE lutris "Lutris" "All-in-one game manager" \
+  FALSE wine "Wine" "Windows apps and games" \
+  FALSE heroic-games-launcher-bin "Heroic (AUR)" "Epic / GOG client" \
+  TRUE gamemode "GameMode" "Auto CPU/GPU boost in games" \
+  TRUE mangohud "MangoHud" "FPS overlay (F12)" \
+  FALSE lib32-mangohud "MangoHud 32-bit" "Overlay for 32-bit games" \
+  FALSE proton-ge-custom-bin "Proton-GE (AUR)" "Community Proton for Steam" \
+  FALSE discord "Discord" "Voice for parties" 2>/dev/null)" || exit 0
+
+SEL="$(echo "$SEL" | tr -s ' ' | sed 's/^ //;s/ $//')"
+[ -n "$SEL" ] || { zenity --info --window-icon="$ICON" --text="$T_NORUN" 2>/dev/null; exit 0; }
+
+is_aur() {
+  case "$1" in
+    heroic-games-launcher-bin|proton-ge-custom-bin) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+# yay for AUR items
+for p in $SEL; do
+  if is_aur "$p" && ! command -v yay >/dev/null 2>&1; then
+    sudo_keep
+    sudo -n pacman -S --needed --noconfirm yay >>"$LOG" 2>&1 || {
+      SEL="$(for q in $SEL; do is_aur "$q" || echo "$q"; done)"
+      break
+    }
+  fi
+done
+
+# multilib for steam / wine / lib32
+if echo " $SEL " | grep -qE " (steam|wine|lib32-mangohud) "; then
+  if ! grep -q '^\[multilib\]' /etc/pacman.conf 2>/dev/null; then
+    sudo_keep
+    sudo -n sed -i '/^#\[multilib\]$/,/^#Include = \/etc\/pacman.d\/mirrorlist$/ s/^#//' /etc/pacman.conf
+    sudo -n pacman -Sy >>"$LOG" 2>&1
+  fi
+fi
+
+# GameMode: nothing to enable, works out of the box; MangoHud config lives in skel
+N="$(echo "$SEL" | wc -w)"
+i=0
+FAILED=""
+{
+  for p in $SEL; do
+    i=$((i + 1))
+    echo $((i * 100 / N))
+    echo "# $p ($i/$N)"
+    sudo_keep
+    if is_aur "$p"; then
+      sudo -n yay -S --needed --noconfirm "$p" >>"$LOG" 2>&1 || FAILED="$FAILED $p"
+    else
+      sudo -n pacman -S --needed --noconfirm "$p" >>"$LOG" 2>&1 || FAILED="$FAILED $p"
+    fi
+  done
+} | zenity --progress --window-icon="$ICON" --title="$T_INSTALLING" --auto-close --width=400 2>/dev/null
+
+PASS=""
+touch "$HOME/.config/appleos-gaming-done" 2>/dev/null
+# shellcheck disable=SC2059
+if [ -z "$FAILED" ]; then
+  zenity --info --window-icon="$ICON" --text="$(printf "$T_DONE_OK" "$N")" 2>/dev/null
+else
+  zenity --warning --window-icon="$ICON" --text="$(printf "$T_DONE_FAIL" "$FAILED" "$LOG")" 2>/dev/null
+fi

@@ -1,3 +1,6 @@
+@define-color accent #0a84ff;
+@define-color accent_soft rgba(10, 132, 255, 0.28);
+
 * {
   font-family: "Inter", "JetBrainsMono Nerd Font", sans-serif;
   font-size: 13px;
@@ -19,11 +22,17 @@ window#waybar {
   color: #888888;
   background: transparent;
   border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+#workspaces button:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 #workspaces button.active {
   color: white;
-  background: rgba(255, 255, 255, 0.14);
+  background: @accent_soft;
 }
 
 #workspaces button.empty {

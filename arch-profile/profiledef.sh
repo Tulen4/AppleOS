@@ -32,4 +32,6 @@ file_permissions=(
   ["/usr/local/bin/appleos-welcome"]="0:0:755"
   ["/usr/local/bin/apple-shell-settings"]="0:0:755"
   ["/usr/local/bin/appleos-update"]="0:0:755"
+  ["/usr/local/bin/appleos-settings"]="0:0:755"
+  ["/usr/local/bin/appleos-gaming"]="0:0:755"
 )

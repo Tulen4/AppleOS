@@ -1,8 +1,8 @@
 # AppleOS
 
-Arch-based distro: COSMIC by default + **Apple Shell** (macOS-style desktop
-on labwc: top menu bar, bottom dock, Spotlight). GUI installer with
-online/offline modes, auto updates from GitHub. EN/RU.
+Arch-based distro with **Apple Shell** desktop (macOS-style on labwc:
+top menu bar, bottom dock, Spotlight). Online GUI installer,
+Wi-Fi from the live session, auto updates from GitHub. EN/RU.
 
 ```bash
 ./build.sh   # auto: full ISO (native on Arch, Docker elsewhere, minimal fallback)
@@ -35,9 +35,9 @@ online/offline modes, auto updates from GitHub. EN/RU.
 
 # AppleOS
 
-Arch-дистрибутив: COSMIC по умолчанию + **Apple Shell** (рабочий стол
-в духе macOS на labwc: верхняя панель, нижний док, Spotlight).
-GUI-установщик с онлайн/офлайн режимами, автообновления с GitHub. EN/RU.
+Arch-дистрибутив с рабочим столом **Apple Shell** (в духе macOS на labwc:
+верхняя панель, нижний док, Spotlight). Онлайн GUI-установщик,
+Wi-Fi из live-сессии, автообновления с GitHub. EN/RU.
 
 ```bash
 ./build.sh   # авто: полный ISO (на Arch нативно, в докере на другом дистре, иначе minimal)

@@ -2,8 +2,8 @@
 Type=Application
 Name=Install AppleOS
 Name[ru]=Установить AppleOS
-Comment=Online install, offline install, or Wi-Fi setup
-Comment[ru]=Выбор: онлайн-установка, офлайн-установка или Wi-Fi
+Comment=Online installer (needs internet) or Wi-Fi setup
+Comment[ru]=Онлайн-установка (нужен интернет) или настройка Wi-Fi
 Exec=/usr/local/bin/appleos-installer-chooser
 Icon=/usr/share/pixmaps/appleos-logo.png
 Terminal=false

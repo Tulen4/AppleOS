@@ -18,6 +18,7 @@ if [ "$L" = ru ]; then
   T_CLEAN="Очистка"; T_D_CLEAN="Кэш пакетов, сироты, журнал"
   T_GAMING="Гейминг"; T_D_GAMING="Игровой пресет"
   T_UPDATES="Обновления"; T_D_UPDATES="Обновить шелл и скрипты с GitHub"
+  T_SECURE="Secure Boot"; T_D_SECURE="Ключи sbctl, подпись ядра и загрузчиков"
   T_ABOUT="О системе"; T_D_ABOUT="Версия AppleOS, ядро, железо"
   T_PASS="Пароль sudo:"
   T_PASS_FAIL="Неверный пароль. Еще раз?"
@@ -39,6 +40,7 @@ else
   T_CLEAN="Cleanup"; T_D_CLEAN="Package cache, orphans, journal"
   T_GAMING="Gaming"; T_D_GAMING="Gaming preset"
   T_UPDATES="Updates"; T_D_UPDATES="Update shell and scripts from GitHub"
+  T_SECURE="Secure Boot"; T_D_SECURE="sbctl keys, sign kernel and bootloaders"
   T_ABOUT="About"; T_D_ABOUT="AppleOS version, kernel, hardware"
   T_PASS="Sudo password:"
   T_PASS_FAIL="Wrong password. Retry?"
@@ -148,6 +150,22 @@ sec_cleanup() {
   PASS=""
 }
 
+sec_secure() {
+  if [ ! -d /sys/firmware/efi ]; then
+    if [ "$L" = ru ]; then MSG="Нет UEFI (Legacy BIOS) — Secure Boot невозможен.";
+    else MSG="No UEFI (Legacy BIOS) — Secure Boot impossible."; fi
+    zenity --info --window-icon="$ICON" --text="$MSG" 2>/dev/null
+    return 0
+  fi
+  PASS="$(need_sudo)" || return 0
+  printf '%s\n' "$PASS" | sudo -Sv >/dev/null 2>&1
+  ST="$(sudo -n sbctl status 2>/dev/null | head -6)"
+  if [ "$L" = ru ]; then T="Текущий статус:\n$ST"; else T="Current status:\n$ST"; fi
+  zenity --info --window-icon="$ICON" --title="$T_SECURE" --text="$T" --width=480 2>/dev/null
+  with_progress "$T_SECURE" sudo -n /usr/local/bin/appleos-sb-setup --yes
+  PASS=""
+}
+
 sec_about() {
   VER="$(grep '^VERSION=' /usr/share/apple-shell/VERSION 2>/dev/null | cut -d'"' -f2)"
   [ -z "$VER" ] && VER="?"
@@ -167,6 +185,7 @@ while true; do
     FALSE "$T_CLEAN" "$T_D_CLEAN" \
     FALSE "$T_GAMING" "$T_D_GAMING" \
     FALSE "$T_UPDATES" "$T_D_UPDATES" \
+    FALSE "$T_SECURE" "$T_D_SECURE" \
     FALSE "$T_ABOUT" "$T_D_ABOUT" 2>/dev/null)" || exit 0
   case "$SEC" in
     "$T_DRIVERS") sec_drivers ;;
@@ -175,6 +194,7 @@ while true; do
     "$T_CLEAN") sec_cleanup ;;
     "$T_GAMING") exec /usr/local/bin/appleos-gaming ;;
     "$T_UPDATES") exec /usr/local/bin/appleos-update ;;
+    "$T_SECURE") sec_secure ;;
     *) sec_about ;;
   esac
 done

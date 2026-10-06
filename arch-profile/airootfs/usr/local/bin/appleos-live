@@ -9,10 +9,10 @@ if [ ! -f /home/liveuser/.bashrc ] && [ -d /etc/skel ]; then
 fi
 chown -R 1000:1000 /home/liveuser 2>/dev/null || true
 
-# 2. Autologin session: first available (COSMIC — the AppleOS default)
+# 2. Autologin session: first available (labwc = Apple Shell, the default)
 SESSION=""
 for d in /usr/share/wayland-sessions /usr/share/xsessions; do
-  for cand in cosmic.desktop plasma.desktop gnome.desktop xfce.desktop hyprland.desktop sway.desktop i3.desktop; do
+  for cand in labwc.desktop cosmic.desktop plasma.desktop gnome.desktop xfce.desktop hyprland.desktop sway.desktop i3.desktop; do
     if [ -f "$d/$cand" ]; then SESSION="$cand"; break 2; fi
   done
 done

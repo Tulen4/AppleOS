@@ -21,9 +21,12 @@ Rectangle {
             interval: 1000
             running: true
             repeat: true
-            onTriggered: clock.updateClock()
+            onTriggered: {
+                clock.updateClock();
+                if (typeof greeting !== "undefined") greeting.refresh();
+            }
         }
-        Component.onCompleted: updateClock()
+        Component.onCompleted: { updateClock(); if (typeof greeting !== "undefined") greeting.refresh(); }
     }
 
     // Center: apple + login form
@@ -44,6 +47,19 @@ Rectangle {
             text: "AppleOS"
             color: "white"
             font.pixelSize: 28
+        }
+
+        Text {
+            id: greeting
+            anchors.horizontalCenter: parent.horizontalCenter
+            color: "#bbbbbb"
+            font.pixelSize: 18
+            function refresh() {
+                var h = new Date().getHours();
+                var part = (h >= 5 && h < 12) ? "Good morning" : ((h >= 12 && h < 18) ? "Have a good day" : "Good evening");
+                var who = name.text.length > 0 ? name.text : String(userModel.lastUser);
+                greeting.text = who.length > 0 ? part + ", " + who : part;
+            }
         }
 
         Text {

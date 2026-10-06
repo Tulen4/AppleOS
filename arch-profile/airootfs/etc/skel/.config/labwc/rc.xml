@@ -111,6 +111,48 @@
     <keybind key="W-S-4">
       <action name="Execute" command="sh -c 'grim -g &quot;$(slurp)&quot; ~/Pictures/shot-$(date +%F-%H%M%S).png'" />
     </keybind>
+    <!-- Screen recording toggle -->
+    <keybind key="W-S-5">
+      <action name="Execute" command="apple-shell-record" />
+    </keybind>
+    <!-- Color picker (copy hex) -->
+    <keybind key="W-S-c">
+      <action name="Execute" command="hyprpicker -a" />
+    </keybind>
+    <!-- Clipboard history -->
+    <keybind key="W-v">
+      <action name="Execute" command="apple-shell-clip" />
+    </keybind>
+    <keybind key="A-v">
+      <action name="Execute" command="apple-shell-clip del" />
+    </keybind>
+    <!-- Screenshots: Print = region overlay, Shift+Print = fullscreen -->
+    <keybind key="Print">
+      <action name="Execute" command="apple-shell-shot region" />
+    </keybind>
+    <keybind key="S-Print">
+      <action name="Execute" command="apple-shell-shot full" />
+    </keybind>
+    <!-- Emoji picker -->
+    <keybind key="W-C-space">
+      <action name="Execute" command="sh -c 'cat ~/.config/apple-shell/emoji.txt /usr/share/apple-shell/emoji.txt 2>/dev/null | fuzzel --dmenu | cut -d&quot; &quot; -f1 | wl-copy'" />
+    </keybind>
+    <!-- Volume / brightness OSD -->
+    <keybind key="XF86AudioRaiseVolume">
+      <action name="Execute" command="sh -c 'pamixer -i 5; notify-send -t 1200 &quot;Volume $(pamixer --get-volume)%&quot;'" />
+    </keybind>
+    <keybind key="XF86AudioLowerVolume">
+      <action name="Execute" command="sh -c 'pamixer -d 5; notify-send -t 1200 &quot;Volume $(pamixer --get-volume)%&quot;'" />
+    </keybind>
+    <keybind key="XF86AudioMute">
+      <action name="Execute" command="sh -c 'pamixer -t; notify-send -t 1200 &quot;Volume&quot;'" />
+    </keybind>
+    <keybind key="XF86MonBrightnessUp">
+      <action name="Execute" command="sh -c 'brightnessctl set +5% >/dev/null; notify-send -t 1200 &quot;Brightness $(brightnessctl -m | cut -d, -f4)&quot;'" />
+    </keybind>
+    <keybind key="XF86MonBrightnessDown">
+      <action name="Execute" command="sh -c 'brightnessctl set 5%- >/dev/null; notify-send -t 1200 &quot;Brightness $(brightnessctl -m | cut -d, -f4)&quot;'" />
+    </keybind>
     <!-- Lock -->
     <keybind key="W-l">
       <action name="Execute" command="swaylock -f" />

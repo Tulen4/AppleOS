@@ -138,7 +138,6 @@ networkmanager
 network-manager-applet
 sddm
 os-prober
-cosmic
 fish
 pciutils
 mesa
@@ -173,3 +172,16 @@ nm-connection-editor
 zram-generator
 earlyoom
 capitaine-cursors
+thunar
+tumbler
+gvfs
+pipewire
+wireplumber
+pipewire-pulse
+pipewire-alsa
+noto-fonts
+upower
+sbctl
+libnotify
+wf-recorder
+hyprpicker

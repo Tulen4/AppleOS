@@ -123,4 +123,10 @@ if pacman -Q labwc >/dev/null 2>&1; then
   echo "gtk theme: $GTK"
 fi
 
+# 12. Secure Boot via sbctl (best-effort; needs UEFI + efivars in chroot).
+# Live booted Legacy, or no efivars here -> skip, user runs it later from Settings.
+if [ -x /usr/local/bin/appleos-sb-setup ]; then
+  /usr/local/bin/appleos-sb-setup --yes >>"$LOG" 2>&1 || echo "WARN: sb setup skipped/failed (see log)"
+fi
+
 echo "=== appleos-finish done ==="

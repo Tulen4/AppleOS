@@ -6,8 +6,11 @@ iso_name="appleos"
 iso_label="APPLEOS_$(date --date="@${SOURCE_DATE_EPOCH:-$(date +%s)}" +%Y%m)"
 iso_publisher="AppleOS <https://example.invalid/appleos>"
 iso_application="AppleOS Live/Rescue (based on Arch Linux)"
-iso_version="0.4.0"
-install_dir="appleos"
+iso_version="0.5.0"
+# NOTE: install_dir stays "arch" (like stock Arch / EndeavourOS) on purpose:
+# Ventoy hardcodes archiso paths as (loop)/arch/... and only boots ISOs it
+# recognizes. Branding lives in iso_name/label/menus, not in this path.
+install_dir="arch"
 buildmodes=('iso')
 bootmodes=('bios.syslinux'
            'uefi.systemd-boot')
@@ -31,7 +34,11 @@ file_permissions=(
   ["/usr/local/bin/appleos-installer-chooser"]="0:0:755"
   ["/usr/local/bin/appleos-welcome"]="0:0:755"
   ["/usr/local/bin/apple-shell-settings"]="0:0:755"
+  ["/usr/local/bin/apple-shell-record"]="0:0:755"
+  ["/usr/local/bin/apple-shell-shot"]="0:0:755"
+  ["/usr/local/bin/apple-shell-clip"]="0:0:755"
   ["/usr/local/bin/appleos-update"]="0:0:755"
   ["/usr/local/bin/appleos-settings"]="0:0:755"
   ["/usr/local/bin/appleos-gaming"]="0:0:755"
+  ["/usr/local/bin/appleos-sb-setup"]="0:0:755"
 )

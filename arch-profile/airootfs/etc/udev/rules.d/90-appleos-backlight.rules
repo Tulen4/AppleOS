@@ -1,0 +1,2 @@
+# Apple Shell :: let users change backlight (brightness keys) without sudo.
+ACTION=="add", SUBSYSTEM=="backlight", RUN+="/bin/chgrp video /sys/class/backlight/%k/brightness", RUN+="/bin/chmod g+w /sys/class/backlight/%k/brightness"

@@ -29,7 +29,9 @@ if [ "$L" = ru ]; then
   T_SWAY_OK="Готово. Разлогинься и выбери сессию SwayFX на экране входа."
   T_SWAY_FAIL="Не поставилось. Лог смотри в терминале: yay -S swayfx"
   T_KEYS_T="Горячие клавиши"
-  T_KEYS_TEXT="Super+Space / Super+D — Spotlight / меню\nSuper+T — терминал   Super+W — браузер   Super+E — файлы\nSuper+I — эти настройки   Super+Q — закрыть\nSuper+F — во весь экран   Super+M — свернуть\nSuper+стрелки — половины   Super+1..4 — столы\nCtrl+Left/Right — соседний стол   Super+Tab — окна\nSuper+L — блокировка   Super+Shift+3/4 — скриншот"
+  T_KEYS_TEXT="Super+Space / Super+D — Spotlight / меню\nSuper+T — терминал   Super+W — браузер   Super+E — файлы\nSuper+I — эти настройки   Super+Q — закрыть\nSuper+F — во весь экран   Super+M — свернуть\nSuper+V — буфер обмена   Super+Shift+5 — запись экрана\nSuper+Shift+C — пипетка   Super+Ctrl+Space — эмодзи\nSuper+стрелки — половины   Super+1..4 — столы\nCtrl+Left/Right — соседний стол   Super+Tab — окна\nSuper+L — блокировка   Super+Shift+3/4 — скриншот
+Super+V — буфер   Alt+V — удалить из буфера
+Print — скриншот   Shift+Print — весь экран"
   T_ABOUT_T="Об Apple Shell"
   T_ABOUT_TEXT="Оригинальный стол AppleOS на labwc: меню-панель, док, Spotlight.\nБез ассетов Apple. labwc перечитывает тему на лету."
   T_DONE="Применено"
@@ -48,7 +50,9 @@ else
   T_SWAY_OK="Done. Log out and pick the SwayFX session at login."
   T_SWAY_FAIL="Install failed. Terminal log: yay -S swayfx"
   T_KEYS_T="Keybindings"
-  T_KEYS_TEXT="Super+Space / Super+D — Spotlight / menu\nSuper+T — terminal   Super+W — browser   Super+E — files\nSuper+I — these settings   Super+Q — close\nSuper+F — fullscreen   Super+M — minimize\nSuper+arrows — halves   Super+1..4 — workspaces\nCtrl+Left/Right — neighbor space   Super+Tab — windows\nSuper+L — lock   Super+Shift+3/4 — screenshot"
+  T_KEYS_TEXT="Super+Space / Super+D — Spotlight / menu\nSuper+T — terminal   Super+W — browser   Super+E — files\nSuper+I — these settings   Super+Q — close\nSuper+F — fullscreen   Super+M — minimize\nSuper+V — clipboard   Super+Shift+5 — record\nSuper+Shift+C — picker   Super+Ctrl+Space — emoji\nSuper+arrows — halves   Super+1..4 — workspaces\nCtrl+Left/Right — neighbor space   Super+Tab — windows\nSuper+L — lock   Super+Shift+3/4 — screenshot
+Super+V — clipboard   Alt+V — delete from it
+Print — screenshot   Shift+Print — full screen"
   T_ABOUT_T="About Apple Shell"
   T_ABOUT_TEXT="The original AppleOS desktop on labwc: menu bar, dock, Spotlight.\nNo Apple assets. labwc re-reads themes live."
   T_DONE="Applied"
@@ -130,6 +134,7 @@ pick_wallpaper() {
     --title="$T_WALL" --text="$T_WALL_BUNDLED" \
     --column="" --column="x" \
     TRUE wallpaper.png FALSE wallpaper-midnight.png FALSE wallpaper-sunset.png \
+    FALSE wallpaper-ocean.png FALSE wallpaper-graphite.png \
     FALSE "$T_WALL_CUSTOM" 2>/dev/null)" || return 0
   if [ "$W" = "$T_WALL_CUSTOM" ]; then
     W="$(zenity --file-selection --window-icon="$ICON" --title="$T_WALL" \

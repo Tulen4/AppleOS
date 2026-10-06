@@ -8,6 +8,13 @@ WORK="build/archiso"
 OUT="build/arch-out"
 MKWORK="build/mkwork"
 
+# Pinned build epoch: makes the ISO uuid deterministic (mkarchiso derives it
+# from SOURCE_DATE_EPOCH), so boot/grub/grub.cfg can bake the real uuid for Ventoy.
+export SOURCE_DATE_EPOCH=1759276800
+# Same formula as mkarchiso: TZ=UTC printf '%(%F-%H-%M-%S-00)T' $SOURCE_DATE_EPOCH
+APPLEOS_UUID="$(TZ=UTC printf '%(%F-%H-%M-%S-00)T' "$SOURCE_DATE_EPOCH")"
+echo "[arch] pinned epoch $SOURCE_DATE_EPOCH -> uuid $APPLEOS_UUID"
+
 command -v mkarchiso >/dev/null || { echo "ERROR: no mkarchiso. On Arch: sudo pacman -S archiso. On another distro: ./scripts/build-arch-docker.sh"; exit 1; }
 command -v repo-add >/dev/null || { echo "ERROR: no repo-add. On Arch: sudo pacman -S pacman-contrib. On another distro: ./scripts/build-arch-docker.sh"; exit 1; }
 [ -d /usr/share/archiso/configs/releng ] || { echo "ERROR: no releng profile (archiso package). On another distro: ./scripts/build-arch-docker.sh"; exit 1; }
@@ -35,8 +42,8 @@ cp fastfetch.txt "$WORK/airootfs/usr/share/fastfetch/logos/appleos.txt"
 AS="apple-shell"
 SK="$WORK/airootfs/etc/skel/.config"
 SH="$WORK/airootfs/usr/share/apple-shell"
-mkdir -p "$SK/labwc" "$SK/waybar" "$SK/fuzzel" "$SK/foot" "$SK/mako" "$SK/fontconfig" \
-         "$SH/waybar" "$SH/labwc" "$SH/mako" "$SH/swayfx"
+mkdir -p "$SK/labwc" "$SK/waybar" "$SK/fuzzel" "$SK/foot" "$SK/mako" "$SK/fontconfig" "$SK/swaylock" \
+         "$SH/waybar" "$SH/labwc" "$SH/mako" "$SH/swayfx" "$SH/misc"
 cp "$AS/labwc/rc.xml" "$AS/labwc/autostart" "$AS/labwc/environment" "$AS/labwc/menu.xml" "$SK/labwc/"
 cp "$AS/labwc/themes/themerc-dark" "$SK/labwc/themerc-override"
 cp "$AS/waybar/config-top.json" "$AS/waybar/config-dock.json" "$SK/waybar/"
@@ -45,14 +52,22 @@ cp "$AS/fuzzel/fuzzel.ini" "$SK/fuzzel/"
 cp "$AS/foot/foot.ini" "$SK/foot/"
 cp "$AS/mako/config" "$SK/mako/config"
 cp "$AS/fontconfig/fonts.conf" "$SK/fontconfig/"
-cp "$AS/wallpaper.png" "$AS/wallpaper-midnight.png" "$AS/wallpaper-sunset.png" "$SH/"
+cp "$AS/swaylock/config" "$SK/swaylock/config"
+cp "$AS/misc/emoji.txt" "$SH/misc/"
+cp "$AS"/wallpaper*.png "$SH/"
 cp VERSION "$SH/VERSION"
 cp "$AS"/waybar/style-*.css "$SH/waybar/"
 cp "$AS/labwc/themes/themerc-"* "$SH/labwc/"
 cp "$AS/mako/config-light" "$SH/mako/"
 cp "$AS/swayfx/config" "$SH/swayfx/"
 cp "$AS/scripts/apple-shell-settings" "$WORK/airootfs/usr/local/bin/apple-shell-settings"
-chmod +x "$SK/labwc/autostart" "$WORK/airootfs/usr/local/bin/apple-shell-settings"
+cp "$AS/scripts/apple-shell-record" "$WORK/airootfs/usr/local/bin/apple-shell-record"
+cp "$AS/scripts/apple-shell-shot" "$WORK/airootfs/usr/local/bin/apple-shell-shot"
+cp "$AS/scripts/apple-shell-clip" "$WORK/airootfs/usr/local/bin/apple-shell-clip"
+chmod +x "$SK/labwc/autostart" "$WORK/airootfs/usr/local/bin/apple-shell-settings" \
+         "$WORK/airootfs/usr/local/bin/apple-shell-record" \
+         "$WORK/airootfs/usr/local/bin/apple-shell-shot" \
+         "$WORK/airootfs/usr/local/bin/apple-shell-clip"
 
 # Rename boot entries Arch -> AppleOS (syslinux + grub + systemd-boot)
 grep -rl "Arch Linux" "$WORK/syslinux" "$WORK/efiboot" "$WORK/grub" 2>/dev/null | xargs -r sed -i 's/Arch Linux/AppleOS/g' 2>/dev/null || true
@@ -80,11 +95,17 @@ export PACMAN_CONFIG="$(pwd)/$WORK/pacman.conf"
 ./scripts/mk-calamares-pkg.sh "$WORK"
 
 echo "[arch] running mkarchiso (needs sudo, long build, ~1-2 GB downloads) ..."
-# Our repacked calamares is rebuilt on every run (sha256 changes),
-# and pacstrap with -c would pick yesterday's copy from the shared cache and fail the checksum.
-# The mask only covers our files — the rest of the cache is untouched.
-sudo rm -f /var/cache/pacman/pkg/calamares-*appleos1*.pkg.tar.zst
-sudo mkarchiso -v -w "$MKWORK" -o "$OUT" "$WORK"
+# Our local packages are rebuilt on every run (sha256 changes),
+# and pacstrap with -c would pick yesterday's copies from the shared cache and fail the checksum.
+# Remove exactly the files our repo serves — the rest of the cache is untouched.
+for _pkg in "$PWD"/build/pkg/*.pkg.tar.zst; do
+  [ -f "$_pkg" ] && sudo rm -f "/var/cache/pacman/pkg/$(basename "$_pkg")"
+done
+sudo SOURCE_DATE_EPOCH="$SOURCE_DATE_EPOCH" mkarchiso -v -w "$MKWORK" -o "$OUT" "$WORK"
+
+# Ventoy support: inject our own /boot/grub/grub.cfg (with the real uuid)
+# so Ventoy uses it instead of its broken auto-generated menu.
+./scripts/inject-ventoy-grub.sh "$OUT"/appleos-*.iso
 
 echo ""
 echo "=== DONE ==="

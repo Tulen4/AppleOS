@@ -178,6 +178,25 @@ INSTALL_EOF
 (cd "$LPKGDIR" && tar --numeric-owner --owner=0 --group=0 -I 'zstd -19' -cf "$OLDPWD/$REPODIR/$LOCALES_FILE" .INSTALL .PKGINFO etc)
 echo "[locales-pkg] OK: $REPODIR/$LOCALES_FILE ($(grep -c UTF-8 "$LPKGDIR/.INSTALL") locales)"
 
+# --------------------------------- 2.5 offline installer tree (for -c <dir>)
+# calamares -c takes a DIRECTORY with a full config tree (settings.conf + qml/
+# + modules/ + branding/...), NOT a file. Build offline/ from the extracted
+# package tree + our overrides.
+OFF="$AIROOTFS/etc/calamares/offline"
+rm -rf "$OFF"
+mkdir -p "$OFF"
+[ -f "$PKGDIR/.PKGINFO" ] || bsdtar -xpf "$CALA_PKG" -C "$PKGDIR"
+cp -a "$PKGDIR/etc/calamares/modules" "$PKGDIR/etc/calamares/qml" \
+      "$PKGDIR/etc/calamares/scripts" "$PKGDIR/etc/calamares/files" \
+      "$PKGDIR/etc/calamares/de_images" "$PKGDIR/etc/calamares/calamares-translations.txt" "$OFF/" 2>/dev/null || true
+mkdir -p "$OFF/branding"
+# NOTE: our confs from SOURCE (repack step may have moved them out of staged overlay)
+cp -a arch-profile/airootfs/etc/calamares/branding/appleos "$OFF/branding/"
+cp -a arch-profile/airootfs/etc/calamares/modules/. "$OFF/modules/"
+cp arch-profile/calamares-offline-settings.conf "$OFF/settings.conf"
+echo "[offline] tree ready: $(find "$OFF" -type f | wc -l) files, no netinstall:" \
+  "$(grep -c netinstall "$OFF/settings.conf" || true)"
+
 # ------------------------------------------------- 3. local repository
 repo-add "$REPODIR/appleos-local.db.tar.gz" "$REPODIR"/appleos-live-locales-*.pkg.tar.zst ${REPACKED:+$REPACKED} >/dev/null
 

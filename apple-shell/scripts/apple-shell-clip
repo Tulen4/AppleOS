@@ -1,0 +1,16 @@
+#!/bin/sh
+# Apple Shell clipboard manager.
+# usage: apple-shell-clip [copy|del]   (default: copy)
+# copy: pick entry -> clipboard | del: pick entry -> delete by id -> notify
+set -u
+MODE="${1:-copy}"
+PICK="$(cliphist list 2>/dev/null | fuzzel --dmenu 2>/dev/null)" || exit 0
+[ -n "$PICK" ] || exit 0
+if [ "$MODE" = del ]; then
+  ID="$(printf '%s' "$PICK" | cut -f1)"
+  case "$ID" in ''|*[!0-9]*) exit 1;; esac
+  printf '%s' "$ID" | cliphist delete 2>/dev/null \
+    && notify-send -t 1500 "Apple Shell" "Deleted from clipboard" 2>/dev/null
+else
+  printf '%s' "$PICK" | cliphist decode 2>/dev/null | wl-copy 2>/dev/null
+fi

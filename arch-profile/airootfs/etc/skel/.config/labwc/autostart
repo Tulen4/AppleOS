@@ -25,3 +25,5 @@ wl-paste --type text --watch cliphist store &
 wl-paste --type image --watch cliphist store &
 # idle: lock after 10 min
 swayidle -w timeout 600 'swaylock -f' &
+# installer chooser — live ISO only (installed systems lack /run/archiso)
+[ -d /run/archiso/bootmnt ] && appleos-installer-chooser &

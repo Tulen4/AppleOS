@@ -1,0 +1,74 @@
+#!/bin/bash
+# AppleOS Secure Boot setup via sbctl: own keys + Microsoft keys (dual-boot
+# safe), sign kernel and bootloaders, verify. Auto-resign on updates is
+# handled by sbctl's pacman hook. English/Russian (auto from $LANG).
+# Usage: appleos-sb-setup [--yes]   (--yes = no questions, for installer)
+set -u
+
+ICON="/usr/share/pixmaps/appleos-logo.png"
+YES=false; [ "${1:-}" = "--yes" ] && YES=true
+LOG="/root/appleos-sb.log"
+[ "$(id -u)" -eq 0 ] || LOG="$HOME/.cache/appleos-sb.log"
+mkdir -p "$(dirname "$LOG")"
+
+case "${LANG:-en}" in ru*) L=ru;; *) L=en;; esac
+
+if [ "$L" = ru ]; then
+  T_NOEFI="Нет UEFI (Legacy BIOS) — Secure Boot тут невозможен, пропуск."
+  T_ENROLL="Записать ключи AppleOS + Microsoft в прошивку? (Windows продолжит грузиться)"
+  T_DONE_OK="Secure Boot настроен. Проверь: sbctl verify. Затем включи Secure Boot в BIOS."
+  T_DONE_OFF="Ключи записаны, но Secure Boot в прошивке ВЫКЛЮЧЕН — включи его в BIOS."
+  T_DONE_FAIL="Не всё подписалось. Лог: %s"
+else
+  T_NOEFI="No UEFI (Legacy BIOS) — Secure Boot impossible here, skipping."
+  T_ENROLL="Enroll AppleOS + Microsoft keys into firmware? (Windows keeps booting)"
+  T_DONE_OK="Secure Boot set up. Check: sbctl verify. Then enable Secure Boot in BIOS."
+  T_DONE_OFF="Keys enrolled, but Secure Boot is DISABLED in firmware — enable it in BIOS."
+  T_DONE_FAIL="Not everything signed. Log: %s"
+fi
+
+say() { echo "$1" | tee -a "$LOG"; }
+ask() { # $1=text -> 0=yes
+  $YES && return 0
+  zenity --question --window-icon="$ICON" --text="$1" --width=480 2>/dev/null
+}
+
+[ -d /sys/firmware/efi ] || { say "$T_NOEFI"; exit 0; }
+command -v sbctl >/dev/null || { say "ERROR: no sbctl"; exit 1; }
+
+# 1. Keys (skip if exist)
+if [ ! -f /usr/share/secureboot/keys/db/db.pem ]; then
+  say "create-keys..."
+  sbctl create-keys >>"$LOG" 2>&1 || { say "ERROR: create-keys failed"; exit 1; }
+else
+  say "keys exist, reuse"
+fi
+
+# 2. Enroll ours + Microsoft (dual-boot safe). Re-enrolling is harmless
+# (sbctl errors out if already enrolled — logged, ignored).
+ask "$T_ENROLL" || exit 0
+say "enroll-keys --microsoft..."
+sbctl enroll-keys --microsoft >>"$LOG" 2>&1 || say "WARN: enroll-keys rc=$? (already enrolled? see log)"
+
+# 3. Sign everything bootable (kernels + ESP binaries)
+SIGNED=0; FAILED=""
+for f in /boot/vmlinuz-* /boot/efi/EFI/BOOT/BOOT*.EFI /boot/efi/EFI/*/grub*.efi /boot/EFI/BOOT/BOOT*.EFI; do
+  [ -f "$f" ] || continue
+  if sbctl sign -s "$f" >>"$LOG" 2>&1; then SIGNED=$((SIGNED + 1)); else FAILED="$FAILED $f"; fi
+done
+say "signed: $SIGNED files; failed:$FAILED"
+
+# 4. Report
+sbctl verify >>"$LOG" 2>&1 || true
+if [ -z "$FAILED" ]; then
+  if sbctl status 2>/dev/null | grep -i "secure boot" | grep -qi "enabled"; then
+    MSG="$T_DONE_OK"
+  else
+    MSG="$T_DONE_OFF"
+  fi
+else
+  # shellcheck disable=SC2059
+  MSG="$(printf "$T_DONE_FAIL" "$LOG")"
+fi
+say "$MSG"
+$YES || zenity --info --window-icon="$ICON" --text="$MSG" --width=480 2>/dev/null

@@ -11,7 +11,7 @@
   "custom/finder": {
     "format": "",
     "tooltip": "Files",
-    "on-click": "cosmic-files"
+    "on-click": "thunar"
   },
   "custom/terminal": {
     "format": "",

@@ -1,10 +1,10 @@
 NAME="AppleOS"
-PRETTY_NAME="AppleOS 0.4.0 (based on Arch Linux)"
+PRETTY_NAME="AppleOS 0.5.0 (based on Arch Linux)"
 ID=appleos
 ID_LIKE=arch
 BASE=arch
-VERSION_ID="0.4.0"
-VERSION="0.4.0"
+VERSION_ID="0.5.0"
+VERSION="0.5.0"
 HOME_URL="https://example.invalid/appleos"
 SUPPORT_URL="https://wiki.archlinux.org/"
 BUG_REPORT_URL="https://example.invalid/appleos/bugs"

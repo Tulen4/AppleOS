@@ -5,7 +5,7 @@
   "spacing": 6,
   "modules-left": ["custom/apple", "wlr/workspaces"],
   "modules-center": [],
-  "modules-right": ["tray", "pulseaudio", "network", "battery", "custom/spotlight", "clock"],
+  "modules-right": ["tray", "custom/dnd", "pulseaudio", "network", "battery", "custom/weather", "custom/spotlight", "clock"],
   "custom/apple": {
     "format": "",
     "tooltip": "AppleOS",
@@ -40,7 +40,29 @@
     "tooltip": "Spotlight search",
     "on-click": "fuzzel"
   },
+  "custom/weather": {
+    "format": "{}",
+    "interval": 1800,
+    "exec": "curl -s --max-time 10 'wttr.in/?format=%c+%t' 2>/dev/null || echo ''",
+    "on-click": "xdg-open https://wttr.in"
+  },
+  "custom/dnd": {
+    "format": "{}",
+    "exec": "makoctl mode | grep -q do-not-disturb && echo DND || echo ''",
+    "interval": 5,
+    "tooltip": "Do not disturb (click to toggle)",
+    "on-click": "makoctl mode -t do-not-disturb"
+  },
   "clock": {
-    "format": "{:%a %d %b  %H:%M}"
+    "format": "{:%a %d %b  %H:%M}",
+    "tooltip-format": "<tt><small>{calendar}</small></tt>",
+    "calendar": {
+      "mode": "year",
+      "mode-mon-col": 3,
+      "on-scroll": 1
+    },
+    "actions": {
+      "on-click-right": "mode"
+    }
   }
 }

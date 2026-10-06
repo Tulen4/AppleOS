@@ -62,6 +62,18 @@ bindsym $mod+Tab workspace back_and_forth
 bindsym $mod+l exec swaylock -f
 bindsym $mod+Shift+3 exec sh -c 'grim ~/Pictures/shot-$(date +%F-%H%M%S).png'
 bindsym $mod+Shift+4 exec sh -c 'grim -g "$(slurp)" ~/Pictures/shot-$(date +%F-%H%M%S).png'
+bindsym $mod+Shift+5 exec apple-shell-record
+bindsym $mod+Shift+c exec hyprpicker -a
+bindsym $mod+v exec apple-shell-clip
+bindsym Alt+v exec apple-shell-clip del
+bindsym Print exec apple-shell-shot region
+bindsym Shift+Print exec apple-shell-shot full
+bindsym $mod+Ctrl+space exec sh -c 'cat ~/.config/apple-shell/emoji.txt /usr/share/apple-shell/emoji.txt 2>/dev/null | fuzzel --dmenu | cut -d" " -f1 | wl-copy'
+bindsym XF86AudioRaiseVolume exec sh -c 'pamixer -i 5; notify-send -t 1200 "Volume $(pamixer --get-volume)%"'
+bindsym XF86AudioLowerVolume exec sh -c 'pamixer -d 5; notify-send -t 1200 "Volume $(pamixer --get-volume)%"'
+bindsym XF86AudioMute exec sh -c 'pamixer -t; notify-send -t 1200 "Volume"'
+bindsym XF86MonBrightnessUp exec sh -c 'brightnessctl set +5% >/dev/null; notify-send -t 1200 "Brightness $(brightnessctl -m | cut -d, -f4)"'
+bindsym XF86MonBrightnessDown exec sh -c 'brightnessctl set 5%- >/dev/null; notify-send -t 1200 "Brightness $(brightnessctl -m | cut -d, -f4)"'
 bindsym $mod+comma exec apple-shell-settings
 bindsym $mod+Shift+q exec swaymsg exit
 bindsym $mod+Shift+r reload

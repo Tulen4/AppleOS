@@ -1,0 +1,16 @@
+#!/bin/sh
+# Apple Shell :: screen recording toggle (Super+Shift+5).
+# Records a slurp-selected region with wf-recorder into ~/Videos.
+set -u
+mkdir -p "$HOME/Videos" "$HOME/.config/apple-shell"
+if pgrep -x wf-recorder >/dev/null 2>&1; then
+  pkill -x wf-recorder
+  notify-send -t 2500 "Apple Shell" "Recording stopped — saved to ~/Videos" 2>/dev/null
+else
+  OUT="$HOME/Videos/rec-$(date +%F-%H%M%S).mp4"
+  echo "$OUT" > "$HOME/.config/apple-shell/last-rec"
+  GEO="$(slurp 2>/dev/null)" || exit 0
+  [ -n "$GEO" ] || exit 0
+  wf-recorder -g "$GEO" -f "$OUT" >/dev/null 2>&1 &
+  notify-send -t 2500 "Apple Shell" "Recording… Super+Shift+5 to stop" 2>/dev/null
+fi

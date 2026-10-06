@@ -19,11 +19,17 @@ online/offline modes, auto updates from GitHub. EN/RU.
 | Super+I | Apple Shell settings |
 | Super+Q | Close window |
 | Super+F | Fullscreen |
+| Super+V | Clipboard |
+| Super+Shift+5 | Screen record |
+| Super+Shift+C | Color picker |
+| Super+Ctrl+Space | Emoji |
 | Super+M | Minimize |
 | Super+arrows | Screen halves |
 | Super+1..4, Ctrl+Left/Right | Workspaces |
 | Super+Tab | Window switcher |
 | Super+L | Lock |
+| Super+V / Alt+V | Clipboard / delete |
+| Print / Shift+Print | Screenshot / fullscreen |
 
 ---
 
@@ -48,8 +54,14 @@ GUI-установщик с онлайн/офлайн режимами, авто
 | Super+I | Настройки шелла |
 | Super+Q | Закрыть окно |
 | Super+F | Во весь экран |
+| Super+V | Буфер обмена |
+| Super+Shift+5 | Запись экрана |
+| Super+Shift+C | Пипетка цвета |
+| Super+Ctrl+Space | Эмодзи |
 | Super+M | Свернуть |
 | Super+стрелки | Половины экрана |
 | Super+1..4, Ctrl+Left/Right | Столы |
 | Super+Tab | Переключатель окон |
 | Super+L | Блокировка |
+| Super+V / Alt+V | Буфер / удалить |
+| Print / Shift+Print | Скриншот / весь экран |

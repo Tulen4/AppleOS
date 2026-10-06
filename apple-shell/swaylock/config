@@ -1,0 +1,16 @@
+color=000000
+font=Inter
+indicator
+indicator-radius=120
+indicator-thickness=10
+ring-color=3a3a42
+key-hl-color=0a84ff
+inside-color=00000000
+separator-color=00000000
+text-color=ffffffff
+clock
+datestr=%a, %d %b
+timestr=%H:%M
+fade-in=0.2
+image=/usr/share/apple-shell/wallpaper.png
+scaling=fill

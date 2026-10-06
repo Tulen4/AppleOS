@@ -5,8 +5,6 @@
 set -u
 
 ICON="/usr/share/pixmaps/appleos-logo.png"
-CALA_ONLINE="/etc/calamares/settings_online.conf"
-CALA_OFFLINE="/etc/calamares/settings_offline.conf"
 
 has_net() {
   curl -sI --max-time 6 https://archlinux.org >/dev/null 2>&1 && return 0
@@ -87,8 +85,8 @@ if ! command -v zenity >/dev/null 2>&1; then
   echo "AppleOS installer: 1=online 2=offline"
   read -rp "Choice [1/2]: " M
   case "$M" in
-    1) exec sudo -E calamares -c "$CALA_ONLINE" ;;
-    *) exec sudo -E calamares -c "$CALA_OFFLINE" ;;
+    1) exec sudo -E calamares ;;
+    *) exec sudo -E calamares -c /etc/calamares/offline ;;
   esac
 fi
 
@@ -102,8 +100,8 @@ while true; do
     "$DEF_OFF" "$T_OFFLINE" "$T_D_OFF" \
     "FALSE" "$T_WIFI" "$T_D_WIFI" 2>/dev/null)" || exit 0
   case "$MODE" in
-    "$T_ONLINE") sudo -E calamares -c "$CALA_ONLINE"; exit $? ;;
-    "$T_OFFLINE") sudo -E calamares -c "$CALA_OFFLINE"; exit $? ;;
+    "$T_ONLINE") sudo -E calamares; exit $? ;;
+    "$T_OFFLINE") sudo -E calamares -c /etc/calamares/offline; exit $? ;;
     *) wifi_setup ;;
   esac
 done

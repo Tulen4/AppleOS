@@ -1,0 +1,16 @@
+#!/bin/sh
+# Apple Shell screenshot, GNOME-style: overlay appears, select a region, done.
+# usage: apple-shell-shot [region|full]   (default: region)
+# Saves to ~/Pictures, copies to clipboard, notifies.
+set -u
+mkdir -p "$HOME/Pictures"
+F="$HOME/Pictures/shot-$(date +%F-%H%M%S).png"
+if [ "${1:-region}" = full ]; then
+  grim "$F" 2>/dev/null || exit 1
+else
+  GEO="$(slurp 2>/dev/null)" || exit 0
+  [ -n "$GEO" ] || exit 0
+  grim -g "$GEO" "$F" 2>/dev/null || exit 1
+fi
+wl-copy < "$F" 2>/dev/null
+notify-send -t 2500 "Screenshot" "Saved + copied: $(basename "$F")" 2>/dev/null

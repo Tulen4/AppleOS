@@ -1,0 +1,81 @@
+# AppleOS netinstall groups (Calamares EndeavourOS-fork format).
+# Default: Apple Shell + bash. Needs internet (live Wi-Fi is fine).
+- name: "Apple Shell"
+  description: "macOS-style desktop on labwc (AppleOS original, default)"
+  hidden: false
+  expanded: false
+  selected: true
+  critical: false
+  packages: ["labwc", "waybar", "fuzzel", "mako", "swaybg", "swaylock", "swayidle", "grim", "slurp", "wl-clipboard", "cliphist", "foot", "polkit-gnome", "xdg-desktop-portal-wlr", "xdg-desktop-portal-gtk", "papirus-icon-theme", "inter-font", "ttf-jetbrains-mono", "ttf-jetbrains-mono-nerd", "noto-fonts-emoji", "brightnessctl", "pamixer", "pavucontrol"]
+
+- name: "COSMIC"
+  description: "Full desktop environment"
+  hidden: false
+  expanded: false
+  selected: false
+  critical: false
+  packages: ["cosmic"]
+
+- name: "GNOME"
+  description: "GNOME desktop"
+  hidden: false
+  expanded: false
+  selected: false
+  critical: false
+  packages: ["gnome"]
+
+- name: "Plasma"
+  description: "KDE Plasma desktop"
+  hidden: false
+  expanded: false
+  selected: false
+  critical: false
+  packages: ["plasma"]
+
+- name: "Xfce"
+  description: "Xfce (lightweight)"
+  hidden: false
+  expanded: false
+  selected: false
+  critical: false
+  packages: ["xfce4", "xfce4-goodies"]
+
+- name: "Hyprland"
+  description: "Hyprland (tiling Wayland compositor)"
+  hidden: false
+  expanded: false
+  selected: false
+  critical: false
+  packages: ["hyprland", "kitty", "waybar", "wofi"]
+
+- name: "Sway"
+  description: "Sway (i3-compatible Wayland)"
+  hidden: false
+  expanded: false
+  selected: false
+  critical: false
+  packages: ["sway", "foot", "waybar", "wofi"]
+
+- name: "i3"
+  description: "i3 (tiling X11)"
+  hidden: false
+  expanded: false
+  selected: false
+  critical: false
+  packages: ["i3-wm", "i3status", "i3lock", "rofi", "alacritty"]
+
+- name: "zsh"
+  description: "zsh shell (becomes the user shell if selected)"
+  hidden: false
+  expanded: false
+  selected: false
+  critical: false
+  packages: ["zsh", "grml-zsh-config"]
+
+- name: "fish"
+  description: "fish shell (becomes the user shell if selected)"
+  hidden: false
+  expanded: false
+  selected: false
+  critical: false
+  packages: ["fish"]

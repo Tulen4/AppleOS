@@ -31,11 +31,17 @@ echo "WARNING: ALL DATA on $DEV will be DESTROYED."
 read -rp "Type YES in capitals to continue: " CONFIRM
 [ "$CONFIRM" = "YES" ] || { echo "aborted."; exit 1; }
 
-# Unmount everything on this device
-for m in $(lsblk -ln -o MOUNTPOINT "$DEV" | grep . || true); do umount "$m"; done
+# Unmount everything on this device (mountpoints may contain spaces!).
+# Lazy (-l) because file managers (nautilus) often hold the mount busy.
+while IFS= read -r m; do
+  if [ -n "$m" ]; then umount -l "$m" 2>/dev/null || true; fi
+done < <(lsblk -ln -o MOUNTPOINT "$DEV" 2>/dev/null | grep . || true)
 swapoff $(lsblk -ln -o NAME,MOUNTPOINT "$DEV" 2>/dev/null | awk '$1~/swap/{print}') 2>/dev/null || true
 
 echo "[usb] partitioning $DEV (MBR, single FAT32 bootable)..."
+# Wipe all old signatures first (Ventoy/DD leftovers: ISO9660 PVD, GPT backup).
+# Otherwise blkid/grub see "multiple partition maps" and refuse to work.
+wipefs --all --force "$DEV" >/dev/null 2>&1 || true
 printf 'label: dos\nstart=2048, type=c, bootable\n' | sfdisk --force "$DEV"
 PART="${DEV}1"
 [[ "$DEV" =~ [0-9]$ ]] && PART="${DEV}p1"   # mmcblk/nvme naming
